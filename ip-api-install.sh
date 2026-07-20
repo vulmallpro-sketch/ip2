@@ -180,18 +180,7 @@ def change_ip():
         start_new_session=True
     )
 
-    # 等待机器重启并获取新IP
-    new_ip = old_ip
-    for attempt in range(50):  # 最多等待250秒（50 * 5秒）
-        time.sleep(5)
-        try:
-            new_ip = get_current_ip()
-            if new_ip != "unknown" and new_ip != old_ip:
-                break
-        except:
-            pass
-
-    return jsonify({"status": "success", "old_ip": old_ip, "new_ip": new_ip, "message": "IP更换完成" if new_ip != old_ip else "重启完成，IP未变化"})
+    return jsonify({"status": "success", "message": "已开始执行IP更换，机器重启中", "old_ip": old_ip})
 
 
 if __name__ == '__main__':
