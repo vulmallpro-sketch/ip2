@@ -126,34 +126,7 @@ def get_current_ip():
 
 @app.route(f'/show/{SHOW_TOKEN}')
 def show_ip():
-    return Response(f"""<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<title>当前IP</title>
-<style>
-body {{ font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-       display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }}
-.card {{ background:#fff; padding:48px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.3);
-       text-align:center; }}
-.label {{ font-size:14px; color:#666; margin-bottom:8px; font-weight:500; }}
-.ip {{ font-size:48px; font-weight:700; color:#667eea; word-break:break-all; }}
-.refresh {{ margin-top:16px; }}
-.btn {{ display:inline-block; padding:10px 20px; background:#667eea; color:#fff; border:none; 
-      border-radius:8px; cursor:pointer; font-size:14px; transition:all 0.3s; }}
-.btn:hover {{ background:#764ba2; transform:translateY(-2px); }}
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="label">当前公网IP</div>
-  <div class="ip" id="ip">{get_current_ip()}</div>
-  <div class="refresh">
-    <button class="btn" onclick="location.reload()">刷新</button>
-  </div>
-</div>
-</body>
-</html>""", mimetype='text/html')
+    return f"当前IP: {get_current_ip()}"
 
 
 @app.route(f'/api/show/{SHOW_TOKEN}')
@@ -168,26 +141,7 @@ def change_ip():
         now = time.time()
         if now - last_redial_time < MIN_INTERVAL:
             wait = int(MIN_INTERVAL - (now - last_redial_time))
-            return Response(f"""<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<title>错误</title>
-<style>
-body {{ font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-       display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }}
-.card {{ background:#fff; padding:48px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.3);
-       text-align:center; }}
-.error {{ color:#e74c3c; font-size:18px; }}
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="error">⚠️ 操作过于频繁</div>
-  <div style="margin-top:16px; font-size:14px; color:#666;">请在 {wait} 秒后重试</div>
-</div>
-</body>
-</html>""", mimetype='text/html'), 429
+            return f"错误: 操作过于频繁，请在 {wait} 秒后重试", 429
         last_redial_time = now
 
     old_ip = get_current_ip()
@@ -199,31 +153,7 @@ body {{ font-family: -apple-system, sans-serif; background: linear-gradient(135d
         start_new_session=True
     )
 
-    return Response(f"""<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<title>更换IP</title>
-<style>
-body {{ font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-       display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }}
-.card {{ background:#fff; padding:48px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.3);
-       text-align:center; min-width:350px; }}
-.icon {{ font-size:48px; margin-bottom:16px; }}
-.title {{ font-size:24px; font-weight:700; color:#333; margin-bottom:8px; }}
-.message {{ font-size:14px; color:#666; margin-bottom:16px; }}
-.old-ip {{ font-size:12px; color:#999; margin-top:24px; padding-top:16px; border-top:1px solid #eee; }}
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="icon">🔄</div>
-  <div class="title">已开始更换IP</div>
-  <div class="message">机器正在重启中，请稍候...</div>
-  <div class="old-ip">旧IP: {old_ip}</div>
-</div>
-</body>
-</html>""", mimetype='text/html')
+    return f"已开始更换IP\n旧IP: {old_ip}\n机器正在重启中，请稍候..."
 
 
 if __name__ == '__main__':
