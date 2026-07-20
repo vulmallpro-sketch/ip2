@@ -161,66 +161,6 @@ def api_show_ip():
     return jsonify({{"ip": get_current_ip()}})
 
 
-POLL_PAGE = """<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<title>换IP中</title>
-<style>
-body {{ font-family: -apple-system, sans-serif; background:#0f172a; color:#e2e8f0;
-       display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }}
-.card {{ background:#1e293b; padding:32px 40px; border-radius:12px; text-align:center; min-width:320px; }}
-.spinner {{ width:36px; height:36px; border:4px solid #334155; border-top-color:#38bdf8;
-           border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 16px; }}
-@keyframes spin {{ to {{ transform:rotate(360deg); }} }}
-.ip {{ font-size:20px; font-weight:600; color:#38bdf8; margin-top:8px; }}
-.old {{ color:#94a3b8; font-size:14px; }}
-.done .spinner {{ display:none; }}
-.done {{ border: 1px solid #22c55e33; }}
-</style>
-</head>
-<body>
-<div class="card" id="card">
-  <div class="spinner"></div>
-  <div id="status">已触发换IP，机器重启中，请稍候...</div>
-  <div class="old">旧IP: {old_ip}</div>
-  <div class="ip" id="newip"></div>
-</div>
-<script>
-const oldIp = "{old_ip}";
-const showUrl = "/api/show/{show_token}";
-let attempts = 0;
-const maxAttempts = 40; // 40 * 5s = 200s 超时
-
-async function poll() {{
-  attempts++;
-  try {{
-    const res = await fetch(showUrl, {{ cache: "no-store" }});
-    if (res.ok) {{
-      const data = await res.json();
-      if (data.ip && data.ip !== "unknown") {{
-        document.getElementById('status').innerText =
-          data.ip !== oldIp ? "换IP成功" : "重启完成，IP未变化（可能是DHCP租约未释放）";
-        document.getElementById('newip').innerText = data.ip;
-        document.getElementById('card').classList.add('done');
-        return;
-      }}
-    }}
-  }} catch (e) {{
-    // 机器重启期间连不上是正常的，继续轮询
-  }}
-  if (attempts < maxAttempts) {{
-    setTimeout(poll, 5000);
-  }} else {{
-    document.getElementById('status').innerText = "等待超时，请手动刷新查询IP接口";
-  }}
-}}
-setTimeout(poll, 8000); // 先等8秒再开始轮询，给 sleep 30 + reboot 一点缓冲
-</script>
-</body>
-</html>"""
-
-
 @app.route(f'/ipch/{IPCH_TOKEN}')
 def change_ip():
     global last_redial_time
@@ -228,7 +168,7 @@ def change_ip():
         now = time.time()
         if now - last_redial_time < MIN_INTERVAL:
             wait = int(MIN_INTERVAL - (now - last_redial_time))
-            return jsonify({"error": f"too frequent, wait {wait}s"}), 429
+            return jsonify({"status": "error", "message": f"too frequent, wait {wait}s"}), 429
         last_redial_time = now
 
     old_ip = get_current_ip()
@@ -240,8 +180,7 @@ def change_ip():
         start_new_session=True
     )
 
-    html = POLL_PAGE.format(old_ip=old_ip, show_token=SHOW_TOKEN)
-    return Response(html, mimetype='text/html')
+    return jsonify({"status": "success", "message": "IP更换已开始执行，机器即将重启", "old_ip": old_ip})
 
 
 if __name__ == '__main__':
