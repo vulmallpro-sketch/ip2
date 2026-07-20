@@ -48,7 +48,7 @@ bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/i
 
 ```bash
 # 指定服务名
-S=my-ip-api bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
+S=ip-api bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
 
 # 指定端口（通过 PORT 环境变量）
 PORT=9090 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
