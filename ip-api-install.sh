@@ -126,7 +126,39 @@ def get_current_ip():
 
 @app.route(f'/show/{SHOW_TOKEN}')
 def show_ip():
-    return jsonify({"ip": get_current_ip()})
+    return Response(f"""<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>当前IP</title>
+<style>
+body {{ font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+       display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }}
+.card {{ background:#fff; padding:48px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.3);
+       text-align:center; }}
+.label {{ font-size:14px; color:#666; margin-bottom:8px; font-weight:500; }}
+.ip {{ font-size:48px; font-weight:700; color:#667eea; word-break:break-all; }}
+.refresh {{ margin-top:16px; }}
+.btn {{ display:inline-block; padding:10px 20px; background:#667eea; color:#fff; border:none; 
+      border-radius:8px; cursor:pointer; font-size:14px; transition:all 0.3s; }}
+.btn:hover {{ background:#764ba2; transform:translateY(-2px); }}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="label">当前公网IP</div>
+  <div class="ip" id="ip">{get_current_ip()}</div>
+  <div class="refresh">
+    <button class="btn" onclick="location.reload()">刷新</button>
+  </div>
+</div>
+</body>
+</html>""", mimetype='text/html')
+
+
+@app.route(f'/api/show/{SHOW_TOKEN}')
+def api_show_ip():
+    return jsonify({{"ip": get_current_ip()}})
 
 
 POLL_PAGE = """<!DOCTYPE html>
@@ -156,7 +188,7 @@ body {{ font-family: -apple-system, sans-serif; background:#0f172a; color:#e2e8f
 </div>
 <script>
 const oldIp = "{old_ip}";
-const showUrl = "/show/{show_token}";
+const showUrl = "/api/show/{show_token}";
 let attempts = 0;
 const maxAttempts = 40; // 40 * 5s = 200s 超时
 
