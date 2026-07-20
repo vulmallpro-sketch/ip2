@@ -126,7 +126,7 @@ def get_current_ip():
 
 @app.route(f'/show/{SHOW_TOKEN}')
 def show_ip():
-    return f"当前IP: {get_current_ip()}"
+    return get_current_ip()
 
 
 @app.route(f'/api/show/{SHOW_TOKEN}')
