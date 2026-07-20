@@ -168,7 +168,26 @@ def change_ip():
         now = time.time()
         if now - last_redial_time < MIN_INTERVAL:
             wait = int(MIN_INTERVAL - (now - last_redial_time))
-            return jsonify({"status": "error", "message": f"too frequent, wait {wait}s"}), 429
+            return Response(f"""<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>错误</title>
+<style>
+body {{ font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+       display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }}
+.card {{ background:#fff; padding:48px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.3);
+       text-align:center; }}
+.error {{ color:#e74c3c; font-size:18px; }}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="error">⚠️ 操作过于频繁</div>
+  <div style="margin-top:16px; font-size:14px; color:#666;">请在 {wait} 秒后重试</div>
+</div>
+</body>
+</html>""", mimetype='text/html'), 429
         last_redial_time = now
 
     old_ip = get_current_ip()
@@ -180,7 +199,31 @@ def change_ip():
         start_new_session=True
     )
 
-    return jsonify({"status": "success", "message": "已开始执行IP更换，机器重启中", "old_ip": old_ip})
+    return Response(f"""<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>更换IP</title>
+<style>
+body {{ font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+       display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }}
+.card {{ background:#fff; padding:48px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.3);
+       text-align:center; min-width:350px; }}
+.icon {{ font-size:48px; margin-bottom:16px; }}
+.title {{ font-size:24px; font-weight:700; color:#333; margin-bottom:8px; }}
+.message {{ font-size:14px; color:#666; margin-bottom:16px; }}
+.old-ip {{ font-size:12px; color:#999; margin-top:24px; padding-top:16px; border-top:1px solid #eee; }}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">🔄</div>
+  <div class="title">已开始更换IP</div>
+  <div class="message">机器正在重启中，请稍候...</div>
+  <div class="old-ip">旧IP: {old_ip}</div>
+</div>
+</body>
+</html>""", mimetype='text/html')
 
 
 if __name__ == '__main__':
