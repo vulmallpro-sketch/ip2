@@ -79,6 +79,13 @@ if [ -z "$NODE_ID" ]; then
 	fi
 fi
 
+if [ -z "$NODE_TYPE" ]; then
+	read -p "请输入节点协议类型（如 vmess/vless/trojan/shadowsocks/tuic/hysteria/anytls/v2node，必填）: " NODE_TYPE
+	if [ -z "$NODE_TYPE" ]; then
+		error "节点协议类型不能为空"
+	fi
+fi
+
 if [ -z "$PANEL_URL" ]; then
 	read -p "请输入面板地址（如 https://panel.example.com）: " PANEL_URL
 fi
@@ -99,6 +106,7 @@ if [ ! -f "$CONFIG_PATH" ]; then
   "port": ${PORT},
   "check_interval": ${INTERVAL},
   "node_id": "${NODE_ID}",
+  "node_type": "${NODE_TYPE}",
   "panel_url": "${PANEL_URL}",
   "panel_token": "${PANEL_TOKEN}"
 }
@@ -126,6 +134,7 @@ SHOW_TOKEN     = cfg["show_token"]
 PORT           = cfg.get("port", 8080)
 CHECK_INTERVAL = cfg.get("check_interval", 1800)
 NODE_ID        = cfg.get("node_id", "")
+NODE_TYPE      = cfg.get("node_type", "")
 PANEL_URL      = cfg.get("panel_url", "").rstrip("/")
 PANEL_TOKEN    = cfg.get("panel_token", "")
 RESULT_PATH    = os.path.join(BASE, 'result.json')
@@ -509,7 +518,7 @@ def report_to_panel(results):
     if not PANEL_URL or not PANEL_TOKEN or not NODE_ID:
         return
     try:
-        payload = {"node_id": int(NODE_ID)}
+        payload = {"node_id": int(NODE_ID), "node-type": NODE_TYPE}
         exit_info = results.get("exit", {})
         if exit_info.get("ip") or exit_info.get("region"):
             payload["exit"] = {
