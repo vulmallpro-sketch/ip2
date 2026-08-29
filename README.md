@@ -75,7 +75,7 @@ S=hk-node PORT=3000 INTERVAL=1800 \
 | `S` | 服务名 | `unlock-detect` |
 | `PORT` | 本地监听端口 | `3000` |
 | `INTERVAL` | 自动检测间隔（秒） | `1800` |
-| `NODE_ID` | 面板节点 ID（正整数） | 交互输入 |
+| `NODE_ID` | 面板节点 ID，单个或多个（逗号分隔，如 `1` 或 `1,2,3`） | 交互输入 |
 | `PANEL_URL` | 面板地址 | 交互输入 |
 | `PANEL_TOKEN` | 面板 server_token | 交互输入 |
 

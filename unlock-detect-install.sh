@@ -73,9 +73,9 @@ PORT="${PORT:-${1:-3000}}"
 INTERVAL="${INTERVAL:-1800}"
 
 if [ -z "$NODE_ID" ]; then
-	read -p "请输入节点 ID（面板中的节点数字 ID，必填）: " NODE_ID
-	if [[ ! "$NODE_ID" =~ ^[0-9]+$ ]] || [ "$NODE_ID" -le 0 ]; then
-		error "节点 ID 必须为正整数"
+	read -p "请输入节点 ID（单个或多个，多个用逗号分隔，如 1 或 1,2,3，必填）: " NODE_ID
+	if [[ ! "$NODE_ID" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
+		error "节点 ID 格式错误，只接受正整数或逗号分隔的多个正整数（如 1 或 1,2,3）"
 	fi
 fi
 
@@ -517,36 +517,42 @@ _STATUS_MAP = {
 def report_to_panel(results):
     if not PANEL_URL or not PANEL_TOKEN or not NODE_ID:
         return
-    try:
-        payload = {"node_id": int(NODE_ID), "node-type": NODE_TYPE}
-        exit_info = results.get("exit", {})
-        if exit_info.get("ip") or exit_info.get("region"):
-            payload["exit"] = {
-                "ip":     exit_info.get("ip", ""),
-                "region": exit_info.get("region", ""),
-            }
-        for key, info in results.items():
-            if key not in _REPORT_PLATFORMS:
-                continue
-            if not isinstance(info, dict):
-                continue
-            mapped = _STATUS_MAP.get(info.get("status", ""), "")
-            if not mapped:
-                continue
-            entry = {"status": mapped}
-            if info.get("region"):
-                entry["region"] = info["region"]
-            if info.get("detail"):
-                entry["detail"] = info["detail"]
-            payload[key] = entry
-        url = PANEL_URL + "/api/v1/server/xmnUnlock/unlock"
-        r = requests.post(url, json=payload, params={"token": PANEL_TOKEN}, timeout=15)
-        if r.status_code == 200:
-            log.info(f"上报面板成功: {r.text[:80]}")
-        else:
-            log.warning(f"上报面板失败: HTTP {r.status_code} {r.text[:200]}")
-    except Exception as e:
-        log.error(f"上报面板异常: {e}")
+    # 构建通用 payload（不含 node_id）
+    base_payload = {"node-type": NODE_TYPE}
+    exit_info = results.get("exit", {})
+    if exit_info.get("ip") or exit_info.get("region"):
+        base_payload["exit"] = {
+            "ip":     exit_info.get("ip", ""),
+            "region": exit_info.get("region", ""),
+        }
+    for key, info in results.items():
+        if key not in _REPORT_PLATFORMS:
+            continue
+        if not isinstance(info, dict):
+            continue
+        mapped = _STATUS_MAP.get(info.get("status", ""), "")
+        if not mapped:
+            continue
+        entry = {"status": mapped}
+        if info.get("region"):
+            entry["region"] = info["region"]
+        if info.get("detail"):
+            entry["detail"] = info["detail"]
+        base_payload[key] = entry
+    url = PANEL_URL + "/api/v1/server/xmnUnlock/unlock"
+    # 对每个节点 ID 分别上报
+    node_ids = [nid.strip() for nid in str(NODE_ID).split(",") if nid.strip()]
+    for nid in node_ids:
+        try:
+            payload = dict(base_payload)
+            payload["node_id"] = int(nid)
+            r = requests.post(url, json=payload, params={"token": PANEL_TOKEN}, timeout=15)
+            if r.status_code == 200:
+                log.info(f"上报面板成功 node_id={nid}: {r.text[:80]}")
+            else:
+                log.warning(f"上报面板失败 node_id={nid}: HTTP {r.status_code} {r.text[:200]}")
+        except Exception as e:
+            log.error(f"上报面板异常 node_id={nid}: {e}")
 
 
 # ─── 调度 & 缓存 ─────────────────────────────────────────────
