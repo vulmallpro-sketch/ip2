@@ -343,20 +343,6 @@ def check_abema(exit_region=''):
         return {"status": "error", "detail": str(e)}
 
 
-def check_hbogo(exit_region=''):
-    try:
-        r = requests.get(
-            'https://api2.hbogoasia.com/v1/geog?lang=undefined&version=0&bundleId=www.hbogoasia.com',
-            headers={'User-Agent': UA}, timeout=TIMEOUT
-        )
-        d = r.json()
-        region = _norm(d.get('country')) or exit_region
-        if d.get('territory'):
-            return {"status": "available", "detail": f"亚洲版可用 · {d['territory']}", "region": region}
-        return {"status": "unavailable", "detail": "当前地区不可用", "region": region}
-    except Exception as e:
-        return {"status": "error", "detail": str(e)}
-
 
 def check_bilibili(exit_region=''):
     try:
@@ -499,7 +485,6 @@ def run_all_checks():
         'tiktok':          lambda: check_tiktok(er),
         'bbc_iplayer':     lambda: check_bbc(er),
         'abema':           lambda: check_abema(er),
-        'hbo_go_asia':     lambda: check_hbogo(er),
         'bilibili_intl':   lambda: check_bilibili(er),
         'google_play':     lambda: check_googleplay(er),
         'chatgpt':         lambda: check_chatgpt(er),
