@@ -36,6 +36,7 @@ else
 fi
 
 INSTALL_DIR="/opt/${service_name}"
+mkdir -p "$INSTALL_DIR"
 
 echo_uninstall() {
 	echo "systemctl disable --now $1 ; rm -f /etc/systemd/system/$1.service ; rm -rf /opt/$1"
@@ -94,7 +95,6 @@ if [ -z "$PANEL_TOKEN" ]; then
 	read -p "请输入面板 server_token（v2board 配置中的 server_token）: " PANEL_TOKEN
 fi
 
-mkdir -p "$INSTALL_DIR"
 CONFIG_PATH="${INSTALL_DIR}/config.json"
 if [ ! -f "$CONFIG_PATH" ]; then
 	SHOW_TOKEN=$(python3 -c "import secrets; print(secrets.token_hex(8))")
