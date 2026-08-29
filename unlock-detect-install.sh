@@ -550,26 +550,26 @@ def ui():
         data = dict(_cache)
 
     STATUS_META = {
-        "available":   ("✅", "#22c55e", "可用"),
-        "partial":     ("⚠️", "#f59e0b", "部分"),
-        "unavailable": ("🚫", "#ef4444", "不可用"),
-        "warning":     ("⚠️", "#f59e0b", "警告"),
-        "error":       ("❌", "#6b7280", "失败"),
-        "info":        ("ℹ️", "#3b82f6", "信息"),
+        "available":   ("#16a34a", "#dcfce7", "可用"),
+        "partial":     ("#b45309", "#fef3c7", "部分"),
+        "unavailable": ("#dc2626", "#fee2e2", "受限"),
+        "warning":     ("#b45309", "#fef3c7", "警告"),
+        "error":       ("#6b7280", "#f3f4f6", "失败"),
+        "info":        ("#2563eb", "#dbeafe", "信息"),
     }
-    SERVICE_NAMES = {
-        "youtube_premium": ("YouTube Premium", "🎬"),
-        "netflix":         ("Netflix",         "🎬"),
-        "disney_plus":     ("Disney+",         "🎬"),
-        "prime_video":     ("Prime Video",     "🎬"),
-        "tiktok":          ("TikTok",          "🎬"),
-        "bbc_iplayer":     ("BBC iPlayer",     "🎬"),
-        "abema":           ("ABEMA",           "🎬"),
-        "bilibili_intl":   ("哔哩哔哩港澳台",  "🎬"),
-        "google_play":     ("Google Play 地区","🤖"),
-        "chatgpt":         ("ChatGPT",         "🤖"),
-        "claude":          ("Claude",          "🤖"),
-        "gemini":          ("Gemini",          "🤖"),
+    SERVICES = {
+        "youtube_premium": ("YouTube Premium", "#FF0000", "https://img.icons8.com/color/96/youtube-play.png"),
+        "netflix":         ("Netflix",         "#E50914", "https://img.icons8.com/color/96/netflix.png"),
+        "disney_plus":     ("Disney+",         "#0063E5", "https://img.icons8.com/color/96/disney-plus.png"),
+        "prime_video":     ("Prime Video",     "#00A8E1", "https://img.icons8.com/color/96/amazon-prime-video.png"),
+        "tiktok":          ("TikTok",          "#010101", "https://img.icons8.com/color/96/tiktok.png"),
+        "bbc_iplayer":     ("BBC iPlayer",     "#C0002A", "https://img.icons8.com/color/96/bbc.png"),
+        "abema":           ("ABEMA",           "#7C3AED", "https://img.icons8.com/color/96/tv-show.png"),
+        "bilibili_intl":   ("哔哩哔哩港澳台",  "#FB7299", "https://img.icons8.com/color/96/bilibili.png"),
+        "google_play":     ("Google Play 地区","#4285F4", "https://img.icons8.com/color/96/google-play.png"),
+        "chatgpt":         ("ChatGPT",         "#10A37F", "https://img.icons8.com/color/96/chatgpt.png"),
+        "claude":          ("Claude",          "#D97757", "https://img.icons8.com/color/96/claude.png"),
+        "gemini":          ("Gemini",          "#4E82EE", "https://img.icons8.com/color/96/google-gemini.png"),
     }
 
     def flag(cc):
@@ -577,34 +577,39 @@ def ui():
         if len(cc) != 2: return ""
         return chr(ord(cc[0]) + 127397) + chr(ord(cc[1]) + 127397)
 
-    def render_card(key, name, icon_cat, info):
+    def render_row(key, info):
+        name, brand_color, icon_url = SERVICES[key]
         st = info.get("status", "error")
-        icon, color, label = STATUS_META.get(st, ("❓", "#6b7280", st))
-        region = info.get("region", "")
-        detail = info.get("detail", "")
-        region_html = f'<span class="region">{flag(region)} {region}</span>' if region else ""
-        return f'''<div class="card" style="--accent:{color}">
-  <div class="card-header">
-    <span class="svc-name">{name}</span>
-    {region_html}
+        txt_color, badge_bg, label = STATUS_META.get(st, ("#6b7280", "#f3f4f6", st))
+        region  = info.get("region", "")
+        detail  = info.get("detail", "")
+        flag_html = f'{flag(region)}&nbsp;' if region else ""
+        return f'''<div class="row">
+  <div class="row-icon" style="background:{brand_color}1a;border-color:{brand_color}33">
+    <img src="{icon_url}" alt="{name}" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=font-size:1.4rem;color:{brand_color}>●</span>'" />
   </div>
-  <div class="card-status" style="color:{color}">{icon} {label}</div>
-  <div class="card-detail">{detail}</div>
+  <div class="row-body">
+    <div class="row-name">{name}&nbsp;<span class="row-flag">{flag_html}{region}</span></div>
+    <div class="row-detail">{detail}</div>
+  </div>
+  <div class="row-badge" style="color:{txt_color};background:{badge_bg}">{label}</div>
 </div>'''
 
-    exit_info  = data.get("exit", {})
-    exit_ip    = exit_info.get("ip", "—")
-    exit_rgn   = exit_info.get("region", "")
-    exit_det   = (exit_info.get("detail") or "").replace("\n", " · ")
-    updated_at = data.get("updated_at")
+    exit_info   = data.get("exit", {})
+    exit_ip     = exit_info.get("ip", "—")
+    exit_rgn    = exit_info.get("region", "")
+    exit_detail = (exit_info.get("detail") or "").split("\n")
+    exit_place  = exit_detail[0] if exit_detail else ""
+    exit_isp    = exit_detail[1] if len(exit_detail) > 1 else ""
+    updated_at  = data.get("updated_at")
     updated_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(updated_at)) if updated_at else "—"
 
     streaming_keys = ["youtube_premium","netflix","disney_plus","prime_video","tiktok","bbc_iplayer","abema","bilibili_intl"]
     ai_keys        = ["google_play","chatgpt","claude","gemini"]
 
     def section(title, keys):
-        cards = "".join(render_card(k, SERVICE_NAMES[k][0], SERVICE_NAMES[k][1], data.get(k, {"status":"error","detail":"无数据"})) for k in keys)
-        return f'<h2 class="section-title">{title}</h2><div class="grid">{cards}</div>'
+        rows = "".join(render_row(k, data.get(k, {{"status":"error","detail":"无数据"}})) for k in keys)
+        return f'<div class="section"><div class="section-title">{title}</div><div class="list">{rows}</div></div>'
 
     streaming_html = section("🎬 流媒体", streaming_keys)
     ai_html        = section("🤖 AI 服务", ai_keys)
@@ -614,42 +619,53 @@ def ui():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>节点解锁检测</title>
+<title>综合解锁检测</title>
 <style>
-  *{{box-sizing:border-box;margin:0;padding:0}}
-  body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:24px 16px}}
-  .header{{text-align:center;margin-bottom:32px}}
-  .header h1{{font-size:1.6rem;font-weight:700;color:#f1f5f9;margin-bottom:8px}}
-  .exit-bar{{display:inline-flex;gap:12px;align-items:center;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:10px 20px;font-size:.9rem;color:#94a3b8;flex-wrap:wrap;justify-content:center}}
-  .exit-bar .ip{{color:#38bdf8;font-weight:600;font-size:1rem}}
-  .exit-bar .flag{{font-size:1.2rem}}
-  .meta{{margin-top:8px;font-size:.78rem;color:#475569}}
-  .section-title{{font-size:1rem;font-weight:600;color:#94a3b8;margin:24px 0 12px;letter-spacing:.05em;text-transform:uppercase}}
-  .grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}}
-  .card{{background:#1e293b;border:1px solid #334155;border-left:3px solid var(--accent);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;transition:transform .15s}}
-  .card:hover{{transform:translateY(-2px)}}
-  .card-header{{display:flex;justify-content:space-between;align-items:center}}
-  .svc-name{{font-size:.9rem;font-weight:600;color:#e2e8f0}}
-  .region{{font-size:.78rem;color:#64748b}}
-  .card-status{{font-size:.95rem;font-weight:600}}
-  .card-detail{{font-size:.75rem;color:#64748b;line-height:1.4;word-break:break-all}}
-  .refresh-btn{{display:block;margin:28px auto 0;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:.9rem;cursor:pointer;text-decoration:none;width:fit-content}}
-  .refresh-btn:hover{{background:#2563eb}}
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif;background:#f2f2f7;color:#1c1c1e;min-height:100vh}}
+.topbar{{background:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e5ea;position:sticky;top:0;z-index:10}}
+.topbar-title{{font-size:1.05rem;font-weight:600;color:#1c1c1e}}
+.topbar-btn{{background:#007aff;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:.85rem;cursor:pointer;text-decoration:none}}
+.exit-card{{margin:16px;background:#fff;border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.07)}}
+.exit-flag{{font-size:2.2rem;line-height:1}}
+.exit-body{{flex:1;min-width:0}}
+.exit-ip{{font-size:1.1rem;font-weight:700;color:#1c1c1e;letter-spacing:.02em}}
+.exit-place{{font-size:.82rem;color:#8e8e93;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+.exit-meta{{font-size:.75rem;color:#c7c7cc;margin-top:10px;text-align:center}}
+.section{{margin:0 16px 20px}}
+.section-title{{font-size:.75rem;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.06em;padding:12px 4px 6px}}
+.list{{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07)}}
+.row{{display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #f2f2f7}}
+.row:last-child{{border-bottom:none}}
+.row-icon{{width:44px;height:44px;border-radius:12px;border:1px solid transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}}
+.row-icon img{{width:32px;height:32px;object-fit:contain}}
+.row-body{{flex:1;min-width:0}}
+.row-name{{font-size:.93rem;font-weight:600;color:#1c1c1e;display:flex;align-items:center;gap:4px;flex-wrap:wrap}}
+.row-flag{{font-size:.8rem;color:#8e8e93;font-weight:400}}
+.row-detail{{font-size:.78rem;color:#8e8e93;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+.row-badge{{flex-shrink:0;font-size:.78rem;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}}
+.refresh-wrap{{text-align:center;padding:8px 16px 32px}}
+.refresh-btn{{display:inline-block;background:#007aff;color:#fff;text-decoration:none;border-radius:12px;padding:12px 32px;font-size:.9rem;font-weight:500}}
 </style>
 </head>
 <body>
-<div class="header">
-  <h1>节点解锁检测</h1>
-  <div class="exit-bar">
-    <span class="flag">{flag(exit_rgn)}</span>
-    <span class="ip">{exit_ip}</span>
-    <span>{exit_det}</span>
-  </div>
-  <div class="meta">最后检测：{updated_str}</div>
+<div class="topbar">
+  <span class="topbar-title">综合解锁检测</span>
+  <a class="topbar-btn" href="/check/{SHOW_TOKEN}?redirect=1">刷新检测</a>
 </div>
+<div class="exit-card">
+  <div class="exit-flag">{flag(exit_rgn)}</div>
+  <div class="exit-body">
+    <div class="exit-ip">{exit_ip}</div>
+    <div class="exit-place">{exit_place}{"&nbsp;·&nbsp;" + exit_isp if exit_isp else ""}</div>
+  </div>
+</div>
+<div class="exit-meta">最后检测：{updated_str}</div>
 {streaming_html}
 {ai_html}
-<a class="refresh-btn" href="/check/{SHOW_TOKEN}?redirect=1">🔄 手动触发重新检测</a>
+<div class="refresh-wrap">
+  <a class="refresh-btn" href="/check/{SHOW_TOKEN}?redirect=1">🔄 手动触发重新检测</a>
+</div>
 </body>
 </html>'''
     if not data:
