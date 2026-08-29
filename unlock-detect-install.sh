@@ -908,6 +908,113 @@ CONFIG_PATH="${INSTALL_DIR}/config.json"
 SHOW_TOKEN=$(python3 -c "import json; print(json.load(open('${CONFIG_PATH}'))['show_token'])")
 ACTUAL_PORT=$(python3 -c "import json; print(json.load(open('${CONFIG_PATH}'))['port'])")
 
+# ── 写入全局管理命令 ──────────────────────────────────────────
+cat > "/usr/local/bin/${service_name}" <<MGEOF
+#!/bin/bash
+SERVICE="${service_name}"
+INSTALL_DIR="/opt/${service_name}"
+CONFIG_PATH="\${INSTALL_DIR}/config.json"
+SCRIPT_URL="https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/unlock-detect-install.sh"
+
+_read_cfg() {
+  python3 -c "import json,sys; d=json.load(open('\${CONFIG_PATH}')); print(d.get(sys.argv[1],''))" "\$1" 2>/dev/null
+}
+
+show_info() {
+  SERVER_IP=\$(curl -s --max-time 5 https://ipinfo.io/ip 2>/dev/null || hostname -I | awk '{print \$1}')
+  TOKEN=\$(_read_cfg show_token)
+  PORT=\$(_read_cfg port)
+  NODE_ID=\$(_read_cfg node_id)
+  PANEL_URL=\$(_read_cfg panel_url)
+  echo ""
+  echo "  服务名:       \${SERVICE}"
+  echo "  节点 ID:      \${NODE_ID}"
+  echo "  面板地址:     \${PANEL_URL}"
+  echo "  可视化面板:   http://\${SERVER_IP}:\${PORT}/ui/\${TOKEN}"
+  echo "  JSON 接口:    http://\${SERVER_IP}:\${PORT}/status/\${TOKEN}"
+  echo "  手动触发检测: http://\${SERVER_IP}:\${PORT}/check/\${TOKEN}"
+  echo ""
+}
+
+menu() {
+  echo ""
+  echo "  ┌─────────────────────────────────────┐"
+  echo "  │   \${SERVICE} 管理面板               │"
+  echo "  ├─────────────────────────────────────┤"
+  echo "  │  [1] 查看服务状态 & 接口地址        │"
+  echo "  │  [2] 升级程序（保留配置）           │"
+  echo "  │  [3] 重新安装（清空配置重填）       │"
+  echo "  │  [4] 重启服务                       │"
+  echo "  │  [5] 查看实时日志                   │"
+  echo "  │  [6] 卸载服务                       │"
+  echo "  │  [0] 退出                           │"
+  echo "  └─────────────────────────────────────┘"
+  echo ""
+  read -p "  请选择操作: " choice
+  case "\$choice" in
+    1)
+      show_info
+      systemctl status "\${SERVICE}" --no-pager -l
+      ;;
+    2)
+      S="\${SERVICE}" bash <(curl -fLSs "\${SCRIPT_URL}")
+      ;;
+    3)
+      S="\${SERVICE}" bash <(curl -fLSs "\${SCRIPT_URL}")
+      ;;
+    4)
+      systemctl restart "\${SERVICE}" && echo "已重启" || echo "重启失败"
+      ;;
+    5)
+      journalctl -u "\${SERVICE}" -f
+      ;;
+    6)
+      read -p "  确认卸载 \${SERVICE}？[y/N]: " confirm
+      if [ "\${confirm,,}" = "y" ]; then
+        systemctl disable --now "\${SERVICE}"
+        rm -f "/etc/systemd/system/\${SERVICE}.service"
+        rm -rf "\${INSTALL_DIR}"
+        rm -f "/usr/local/bin/\${SERVICE}"
+        systemctl daemon-reload
+        echo "已卸载"
+      else
+        echo "已取消"
+      fi
+      ;;
+    0)
+      exit 0
+      ;;
+    *)
+      echo "无效选项"
+      ;;
+  esac
+}
+
+if [ -z "\$1" ]; then
+  menu
+else
+  case "\$1" in
+    status)  show_info ; systemctl status "\${SERVICE}" --no-pager -l ;;
+    upgrade) S="\${SERVICE}" bash <(curl -fLSs "\${SCRIPT_URL}") ;;
+    restart) systemctl restart "\${SERVICE}" && echo "已重启" ;;
+    log)     journalctl -u "\${SERVICE}" -f ;;
+    uninstall)
+      systemctl disable --now "\${SERVICE}"
+      rm -f "/etc/systemd/system/\${SERVICE}.service"
+      rm -rf "\${INSTALL_DIR}"
+      rm -f "/usr/local/bin/\${SERVICE}"
+      systemctl daemon-reload
+      echo "已卸载"
+      ;;
+    *)
+      echo "用法: \${SERVICE} [status|upgrade|restart|log|uninstall]"
+      echo "      不带参数则进入交互菜单"
+      ;;
+  esac
+fi
+MGEOF
+chmod +x "/usr/local/bin/${service_name}"
+
 if [ "$UPGRADE_ONLY" -eq 1 ]; then
 	info "升级成功（配置已保留）"
 else
@@ -920,8 +1027,11 @@ if [ "$UPGRADE_ONLY" -eq 0 ]; then
 echo "自动检测间隔: ${INTERVAL} 秒（默认每 30 分钟一次，可用 INTERVAL=xxx 环境变量修改）"
 fi
 echo
-
-UNINSTALL_FILE="/opt/${service_name}.uninstall.sh"
-echo_uninstall "$service_name" > "$UNINSTALL_FILE"
-info "如需卸载："
-echo "bash $UNINSTALL_FILE"
+info "快捷管理命令："
+echo "  ${service_name}            # 交互菜单"
+echo "  ${service_name} status     # 查看状态"
+echo "  ${service_name} upgrade    # 升级程序"
+echo "  ${service_name} restart    # 重启服务"
+echo "  ${service_name} log        # 实时日志"
+echo "  ${service_name} uninstall  # 卸载服务"
+echo
