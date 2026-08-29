@@ -42,14 +42,23 @@ echo_uninstall() {
 }
 
 if [ -f "/etc/systemd/system/${service_name}.service" ]; then
-	hint "该服务已存在，请先运行以下命令卸载："
-	echo_uninstall "$service_name"
-	read -p "或者输入 [r] 彻底重装（不保留token）: " reinstall
-	if [ "${reinstall,,}" == "r" ]; then
+	hint "该服务已存在，请选择操作："
+	echo "  [u] 仅升级程序（保留现有 token/配置，推荐）"
+	echo "  [r] 彻底重装（清空所有配置，重新填写 token 等）"
+	echo "  其他键退出"
+	read -p "请选择 [u/r]: " reinstall
+	if [ "${reinstall,,}" == "u" ]; then
+		info "升级模式：将只更新 app.py，保留现有配置..."
+		# 只更新 app.py，跳过 config.json / 依赖安装部分
+		UPGRADE_ONLY=1
+	elif [ "${reinstall,,}" == "r" ]; then
 		rm -rf "$INSTALL_DIR"
+		UPGRADE_ONLY=0
 	else
 		exit
 	fi
+else
+	UPGRADE_ONLY=0
 fi
 
 command -v python3 >/dev/null 2>&1 || { info "安装 python3..."; apt_install python3; }
@@ -66,6 +75,7 @@ fi
 python3 -m pip install flask requests --break-system-packages -q 2>/dev/null \
     || python3 -m pip install flask requests -q
 
+if [ "$UPGRADE_ONLY" -eq 0 ]; then
 # PORT 支持环境变量或首参数，默认 3000
 # INTERVAL 支持环境变量，默认 1800（秒），即每 30 分钟自动检测一次
 # NODE_ID / PANEL_URL / PANEL_TOKEN 支持环境变量
@@ -115,6 +125,7 @@ EOF
 else
 	info "检测到已有配置，复用现有 token"
 fi
+fi # end UPGRADE_ONLY==0
 
 cat > "${INSTALL_DIR}/app.py" <<'PYEOF'
 import os, json, time, threading, re, logging, concurrent.futures
@@ -893,14 +904,21 @@ systemctl restart "${service_name}"
 
 sleep 2
 SERVER_IP=$(curl -s --max-time 5 https://ipinfo.io/ip || echo "your-server-ip")
+CONFIG_PATH="${INSTALL_DIR}/config.json"
 SHOW_TOKEN=$(python3 -c "import json; print(json.load(open('${CONFIG_PATH}'))['show_token'])")
 ACTUAL_PORT=$(python3 -c "import json; print(json.load(open('${CONFIG_PATH}'))['port'])")
 
-info "安装成功"
+if [ "$UPGRADE_ONLY" -eq 1 ]; then
+	info "升级成功（配置已保留）"
+else
+	info "安装成功"
+fi
 echo "可视化面板:   http://${SERVER_IP}:${ACTUAL_PORT}/ui/${SHOW_TOKEN}"
 echo "JSON 接口:    http://${SERVER_IP}:${ACTUAL_PORT}/status/${SHOW_TOKEN}"
 echo "手动触发检测: http://${SERVER_IP}:${ACTUAL_PORT}/check/${SHOW_TOKEN}"
+if [ "$UPGRADE_ONLY" -eq 0 ]; then
 echo "自动检测间隔: ${INTERVAL} 秒（默认每 30 分钟一次，可用 INTERVAL=xxx 环境变量修改）"
+fi
 echo
 
 UNINSTALL_FILE="/opt/${service_name}.uninstall.sh"
