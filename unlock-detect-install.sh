@@ -74,11 +74,11 @@ fi
 
 if ! python3 -c "import flask, requests" 2>/dev/null; then
   info "安装 flask / requests..."
-  python3 -m pip install flask requests --break-system-packages -q 2>/dev/null \
-    || python3 -m pip install flask requests -q 2>/dev/null \
-    || apt_install python3-flask python3-requests
+  python3 -m pip install flask requests --break-system-packages -q >/dev/null 2>&1 \
+    || python3 -m pip install flask requests -q >/dev/null 2>&1 \
+    || { apt_install python3-flask python3-requests >/dev/null 2>&1 || true; }
   python3 -c "import flask, requests" 2>/dev/null \
-    || error "flask/requests 安装失败，请检查网络或手动执行: pip3 install flask requests --break-system-packages"
+    || error "flask/requests 安装失败，请手动执行: pip3 install flask requests --break-system-packages"
 fi
 
 if [ "$UPGRADE_ONLY" -eq 0 ]; then
