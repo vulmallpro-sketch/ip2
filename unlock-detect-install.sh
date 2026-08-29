@@ -64,23 +64,6 @@ fi
 command -v python3 >/dev/null 2>&1 || { info "安装 python3..."; apt_install python3; }
 command -v curl    >/dev/null 2>&1 || { info "安装 curl...";    apt_install curl; }
 
-if ! command -v pip3 >/dev/null 2>&1; then
-  info "安装 pip3..."
-  if ! apt_install python3-pip; then
-    python3 -m ensurepip --upgrade >/dev/null 2>&1 || true
-  fi
-  python3 -m pip --version >/dev/null 2>&1 || error "pip3 安装失败，请手动安装 python3-pip 后重试"
-fi
-
-if ! python3 -c "import flask, requests" 2>/dev/null; then
-  info "安装 flask / requests..."
-  python3 -m pip install flask requests --break-system-packages -q >/dev/null 2>&1 \
-    || python3 -m pip install flask requests -q >/dev/null 2>&1 \
-    || { apt_install python3-flask python3-requests >/dev/null 2>&1 || true; }
-  python3 -c "import flask, requests" 2>/dev/null \
-    || error "flask/requests 安装失败，请手动执行: pip3 install flask requests --break-system-packages"
-fi
-
 if [ "$UPGRADE_ONLY" -eq 0 ]; then
 # PORT 支持环境变量或首参数，默认 3000
 # INTERVAL 支持环境变量，默认 1800（秒），即每 30 分钟自动检测一次
@@ -111,8 +94,6 @@ if [ -z "$PANEL_TOKEN" ]; then
 	read -p "请输入面板 server_token（v2board 配置中的 server_token）: " PANEL_TOKEN
 fi
 
-mkdir -p "$INSTALL_DIR"
-
 CONFIG_PATH="${INSTALL_DIR}/config.json"
 if [ ! -f "$CONFIG_PATH" ]; then
 	SHOW_TOKEN=$(python3 -c "import secrets; print(secrets.token_hex(8))")
@@ -133,10 +114,20 @@ else
 fi
 fi # end UPGRADE_ONLY==0
 
-cat > "${INSTALL_DIR}/app.py" <<'PYEOF'
-import os, json, time, threading, re, logging, concurrent.futures
-import requests
-from flask import Flask, jsonify, request
+# 创建虚拟环境（彻底绕开 PEP 668 / externally-managed-environment）
+mkdir -p "$INSTALL_DIR"
+VENV="${INSTALL_DIR}/venv"
+if [ ! -d "$VENV" ]; then
+  info "创建 Python 虚拟环境..."
+  python3 -m venv "$VENV" >/dev/null 2>&1 || {
+    apt_install python3-venv python3-full
+    python3 -m venv "$VENV"
+  }
+fi
+info "安装依赖 flask / requests..."
+"${VENV}/bin/pip" install flask requests -q >/dev/null 2>&1 \
+  || error "依赖安装失败，请检查网络连接"
+PYTHON="${VENV}/bin/python3"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 log = logging.getLogger(__name__)
@@ -898,7 +889,7 @@ User=root
 Restart=always
 RestartSec=3
 WorkingDirectory=${INSTALL_DIR}
-ExecStart=/usr/bin/python3 ${INSTALL_DIR}/app.py
+ExecStart=${INSTALL_DIR}/venv/bin/python3 ${INSTALL_DIR}/app.py
 
 [Install]
 WantedBy=multi-user.target
