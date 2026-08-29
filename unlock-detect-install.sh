@@ -607,8 +607,10 @@ def ui():
     streaming_keys = ["youtube_premium","netflix","disney_plus","prime_video","tiktok","bbc_iplayer","abema","bilibili_intl"]
     ai_keys        = ["google_play","chatgpt","claude","gemini"]
 
+    _empty = {"status": "error", "detail": "无数据"}
+
     def section(title, keys):
-        rows = "".join(render_row(k, data.get(k, {{"status":"error","detail":"无数据"}})) for k in keys)
+        rows = "".join(render_row(k, data.get(k, _empty)) for k in keys)
         return f'<div class="section"><div class="section-title">{title}</div><div class="list">{rows}</div></div>'
 
     streaming_html = section("🎬 流媒体", streaming_keys)
