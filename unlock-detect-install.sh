@@ -294,6 +294,8 @@ def check_tiktok(exit_region=''):
             return {"status": "warning", "detail": "请求被拒绝，可能触发风控", "region": region or exit_region}
         if code == 200 and re.search(r'TikTok|SIGI_STATE|__UNIVERSAL_DATA_FOR_REHYDRATION__', body, re.I):
             return {"status": "warning", "detail": "页面可访问，未能解析地区", "region": region or exit_region}
+        if 200 <= code < 400:
+            return {"status": "warning", "detail": "入口可访问，状态待确认", "region": region or exit_region}
         return {"status": "error", "detail": f"检测失败 · HTTP {code}", "region": region or exit_region}
     try:
         r1 = requests.get('https://www.tiktok.com/', headers=headers, timeout=TIMEOUT, allow_redirects=True)
