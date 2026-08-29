@@ -68,8 +68,10 @@ python3 -m pip install flask requests --break-system-packages -q 2>/dev/null \
 
 # PORT 支持环境变量或首参数，默认 3000
 # INTERVAL 支持环境变量，默认 1800（秒），即每 30 分钟自动检测一次
+# NODE_ID 支持环境变量，用于标识当前节点（可选）
 PORT="${PORT:-${1:-3000}}"
 INTERVAL="${INTERVAL:-1800}"
+NODE_ID="${NODE_ID:-}"
 
 mkdir -p "$INSTALL_DIR"
 
@@ -80,7 +82,8 @@ if [ ! -f "$CONFIG_PATH" ]; then
 {
   "show_token": "${SHOW_TOKEN}",
   "port": ${PORT},
-  "check_interval": ${INTERVAL}
+  "check_interval": ${INTERVAL},
+  "node_id": "${NODE_ID}"
 }
 EOF
 	chmod 600 "$CONFIG_PATH"
@@ -105,6 +108,7 @@ with open(os.path.join(BASE, 'config.json')) as f:
 SHOW_TOKEN     = cfg["show_token"]
 PORT           = cfg.get("port", 8080)
 CHECK_INTERVAL = cfg.get("check_interval", 1800)
+NODE_ID        = cfg.get("node_id", "")
 RESULT_PATH    = os.path.join(BASE, 'result.json')
 
 TIMEOUT = 12
@@ -543,7 +547,10 @@ def get_status():
     with _lock:
         if not _cache:
             return jsonify({"error": "尚未完成首次检测，请稍候..."}), 503
-        return jsonify(dict(_cache))
+        result = dict(_cache)
+        if NODE_ID:
+            result["node_id"] = NODE_ID
+        return jsonify(result)
 
 
 @app.route(f'/ui/{SHOW_TOKEN}')
@@ -736,7 +743,7 @@ body{{
 </head>
 <body>
 <div class="topbar">
-  <span class="topbar-title">综合解锁检测</span>
+  <span class="topbar-title">综合解锁检测{" · " + NODE_ID if NODE_ID else ""}</span>
   <a class="topbar-btn" href="/check/{SHOW_TOKEN}?redirect=1">刷新检测</a>
 </div>
 <div class="wrap">
