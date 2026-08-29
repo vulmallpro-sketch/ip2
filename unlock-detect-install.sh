@@ -66,9 +66,9 @@ fi
 python3 -m pip install flask requests --break-system-packages -q 2>/dev/null \
     || python3 -m pip install flask requests -q
 
-# PORT 支持环境变量或首参数，默认 8080
+# PORT 支持环境变量或首参数，默认 3000
 # INTERVAL 支持环境变量，默认 1800（秒），即每 30 分钟自动检测一次
-PORT="${PORT:-${1:-8080}}"
+PORT="${PORT:-${1:-3000}}"
 INTERVAL="${INTERVAL:-1800}"
 
 mkdir -p "$INSTALL_DIR"
@@ -695,11 +695,12 @@ systemctl restart "${service_name}"
 sleep 2
 SERVER_IP=$(curl -s --max-time 5 https://ipinfo.io/ip || echo "your-server-ip")
 SHOW_TOKEN=$(python3 -c "import json; print(json.load(open('${CONFIG_PATH}'))['show_token'])")
+ACTUAL_PORT=$(python3 -c "import json; print(json.load(open('${CONFIG_PATH}'))['port'])")
 
 info "安装成功"
-echo "可视化面板:   http://${SERVER_IP}:${PORT}/ui/${SHOW_TOKEN}"
-echo "JSON 接口:    http://${SERVER_IP}:${PORT}/status/${SHOW_TOKEN}"
-echo "手动触发检测: http://${SERVER_IP}:${PORT}/check/${SHOW_TOKEN}"
+echo "可视化面板:   http://${SERVER_IP}:${ACTUAL_PORT}/ui/${SHOW_TOKEN}"
+echo "JSON 接口:    http://${SERVER_IP}:${ACTUAL_PORT}/status/${SHOW_TOKEN}"
+echo "手动触发检测: http://${SERVER_IP}:${ACTUAL_PORT}/check/${SHOW_TOKEN}"
 echo "自动检测间隔: ${INTERVAL} 秒（默认每 30 分钟一次，可用 INTERVAL=xxx 环境变量修改）"
 echo
 
