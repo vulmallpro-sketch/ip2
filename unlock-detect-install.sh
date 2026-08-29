@@ -68,10 +68,25 @@ python3 -m pip install flask requests --break-system-packages -q 2>/dev/null \
 
 # PORT 支持环境变量或首参数，默认 3000
 # INTERVAL 支持环境变量，默认 1800（秒），即每 30 分钟自动检测一次
-# NODE_ID 支持环境变量，用于标识当前节点（可选）
+# NODE_ID / PANEL_URL / PANEL_TOKEN 支持环境变量
 PORT="${PORT:-${1:-3000}}"
 INTERVAL="${INTERVAL:-1800}"
-NODE_ID="${NODE_ID:-}"
+
+if [ -z "$NODE_ID" ]; then
+	read -p "请输入节点 ID（面板中的节点数字 ID，必填）: " NODE_ID
+	if [[ ! "$NODE_ID" =~ ^[0-9]+$ ]] || [ "$NODE_ID" -le 0 ]; then
+		error "节点 ID 必须为正整数"
+	fi
+fi
+
+if [ -z "$PANEL_URL" ]; then
+	read -p "请输入面板地址（如 https://panel.example.com）: " PANEL_URL
+fi
+PANEL_URL="${PANEL_URL%/}"
+
+if [ -z "$PANEL_TOKEN" ]; then
+	read -p "请输入面板 server_token（v2board 配置中的 server_token）: " PANEL_TOKEN
+fi
 
 mkdir -p "$INSTALL_DIR"
 
@@ -83,7 +98,9 @@ if [ ! -f "$CONFIG_PATH" ]; then
   "show_token": "${SHOW_TOKEN}",
   "port": ${PORT},
   "check_interval": ${INTERVAL},
-  "node_id": "${NODE_ID}"
+  "node_id": "${NODE_ID}",
+  "panel_url": "${PANEL_URL}",
+  "panel_token": "${PANEL_TOKEN}"
 }
 EOF
 	chmod 600 "$CONFIG_PATH"
@@ -109,6 +126,8 @@ SHOW_TOKEN     = cfg["show_token"]
 PORT           = cfg.get("port", 8080)
 CHECK_INTERVAL = cfg.get("check_interval", 1800)
 NODE_ID        = cfg.get("node_id", "")
+PANEL_URL      = cfg.get("panel_url", "").rstrip("/")
+PANEL_TOKEN    = cfg.get("panel_token", "")
 RESULT_PATH    = os.path.join(BASE, 'result.json')
 
 TIMEOUT = 12
@@ -471,6 +490,56 @@ def check_gemini(exit_region=''):
         return {"status": "error", "detail": str(e)}
 
 
+# ─── 上报面板 ────────────────────────────────────────────────
+
+_REPORT_PLATFORMS = {
+    'youtube_premium', 'netflix', 'disney_plus', 'prime_video', 'tiktok',
+    'bbc_iplayer', 'abema', 'bilibili_intl', 'google_play',
+    'chatgpt', 'claude', 'gemini',
+}
+_STATUS_MAP = {
+    'available':   'available',
+    'partial':     'available',
+    'info':        'available',
+    'unavailable': 'unavailable',
+    'warning':     'unavailable',
+}
+
+def report_to_panel(results):
+    if not PANEL_URL or not PANEL_TOKEN or not NODE_ID:
+        return
+    try:
+        payload = {"node_id": int(NODE_ID)}
+        exit_info = results.get("exit", {})
+        if exit_info.get("ip") or exit_info.get("region"):
+            payload["exit"] = {
+                "ip":     exit_info.get("ip", ""),
+                "region": exit_info.get("region", ""),
+            }
+        for key, info in results.items():
+            if key not in _REPORT_PLATFORMS:
+                continue
+            if not isinstance(info, dict):
+                continue
+            mapped = _STATUS_MAP.get(info.get("status", ""), "")
+            if not mapped:
+                continue
+            entry = {"status": mapped}
+            if info.get("region"):
+                entry["region"] = info["region"]
+            if info.get("detail"):
+                entry["detail"] = info["detail"]
+            payload[key] = entry
+        url = PANEL_URL + "/api/v1/server/xmnUnlock/unlock"
+        r = requests.post(url, json=payload, params={"token": PANEL_TOKEN}, timeout=15)
+        if r.status_code == 200:
+            log.info(f"上报面板成功: {r.text[:80]}")
+        else:
+            log.warning(f"上报面板失败: HTTP {r.status_code} {r.text[:200]}")
+    except Exception as e:
+        log.error(f"上报面板异常: {e}")
+
+
 # ─── 调度 & 缓存 ─────────────────────────────────────────────
 
 _cache = {}
@@ -518,6 +587,10 @@ def run_all_checks():
             json.dump(results, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
+    try:
+        report_to_panel(results)
+    except Exception as e:
+        log.error(f"上报面板异常: {e}")
     log.info("检测完成")
     return results
 

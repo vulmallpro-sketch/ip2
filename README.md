@@ -54,12 +54,30 @@ S=ip-api PORT=8080 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpr
 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/unlock-detect-install.sh)
 ```
 
-可选参数：
+安装时会交互式询问：
+
+- **节点 ID**（`NODE_ID`）：面板中的节点数字 ID，必填
+- **面板地址**（`PANEL_URL`）：如 `https://panel.example.com`
+- **面板 Token**（`PANEL_TOKEN`）：v2board 配置中的 `server_token`
+
+也可通过环境变量静默安装（全部参数一行传入）：
 
 ```bash
-# 自定义服务名、端口（默认 3000）、检测间隔（默认 1800 秒）
-S=hk-node PORT=3000 INTERVAL=1800 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/unlock-detect-install.sh)
+S=hk-node PORT=3000 INTERVAL=1800 \
+  NODE_ID=1 \
+  PANEL_URL=https://panel.example.com \
+  PANEL_TOKEN=your_server_token \
+  bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/unlock-detect-install.sh)
 ```
+
+| 环境变量 | 说明 | 默认值 |
+|---|---|---|
+| `S` | 服务名 | `unlock-detect` |
+| `PORT` | 本地监听端口 | `3000` |
+| `INTERVAL` | 自动检测间隔（秒） | `1800` |
+| `NODE_ID` | 面板节点 ID（正整数） | 交互输入 |
+| `PANEL_URL` | 面板地址 | 交互输入 |
+| `PANEL_TOKEN` | 面板 server_token | 交互输入 |
 
 安装完成后输出：
 
