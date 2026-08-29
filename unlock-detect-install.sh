@@ -549,27 +549,40 @@ def ui():
     with _lock:
         data = dict(_cache)
 
+    # txt_color, badge_bg, card_bg, label, icon
     STATUS_META = {
-        "available":   ("#16a34a", "#dcfce7", "可用"),
-        "partial":     ("#b45309", "#fef3c7", "部分"),
-        "unavailable": ("#dc2626", "#fee2e2", "受限"),
-        "warning":     ("#b45309", "#fef3c7", "警告"),
-        "error":       ("#6b7280", "#f3f4f6", "失败"),
-        "info":        ("#2563eb", "#dbeafe", "信息"),
+        "available":   ("#15803d", "#dcfce7", "#f0fdf4", "可用",  "✓"),
+        "partial":     ("#92400e", "#fef3c7", "#fffbeb", "部分",  "~"),
+        "unavailable": ("#b91c1c", "#fee2e2", "#fff1f2", "受限",  "✕"),
+        "warning":     ("#92400e", "#fef3c7", "#fffbeb", "警告",  "!"),
+        "error":       ("#374151", "#f3f4f6", "#f9fafb", "失败",  "!"),
+        "info":        ("#1d4ed8", "#dbeafe", "#eff6ff", "信息",  "i"),
     }
     SERVICES = {
-        "youtube_premium": ("YouTube Premium", "#FF0000", "https://img.icons8.com/color/96/youtube-play.png"),
-        "netflix":         ("Netflix",         "#E50914", "https://img.icons8.com/color/96/netflix.png"),
-        "disney_plus":     ("Disney+",         "#0063E5", "https://img.icons8.com/color/96/disney-plus.png"),
-        "prime_video":     ("Prime Video",     "#00A8E1", "https://img.icons8.com/color/96/amazon-prime-video.png"),
-        "tiktok":          ("TikTok",          "#010101", "https://img.icons8.com/color/96/tiktok.png"),
-        "bbc_iplayer":     ("BBC iPlayer",     "#C0002A", "https://img.icons8.com/color/96/bbc.png"),
-        "abema":           ("ABEMA",           "#7C3AED", "https://img.icons8.com/color/96/tv-show.png"),
-        "bilibili_intl":   ("哔哩哔哩港澳台",  "#FB7299", "https://img.icons8.com/color/96/bilibili.png"),
-        "google_play":     ("Google Play 地区","#4285F4", "https://img.icons8.com/color/96/google-play.png"),
-        "chatgpt":         ("ChatGPT",         "#10A37F", "https://img.icons8.com/color/96/chatgpt.png"),
-        "claude":          ("Claude",          "#D97757", "https://img.icons8.com/color/96/claude.png"),
-        "gemini":          ("Gemini",          "#4E82EE", "https://img.icons8.com/color/96/google-gemini.png"),
+        "youtube_premium": ("YouTube Premium", "#FF0000",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#FF0000"/><path d="M28 20L16 27V13z" fill="#fff"/></svg>'),
+        "netflix": ("Netflix", "#E50914",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#141414"/><path d="M13 9h4l3 10.5V9h4v22h-4l-3-10.5V31h-4z" fill="#E50914"/></svg>'),
+        "disney_plus": ("Disney+", "#0063E5",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#040714"/><text x="12" y="26" font-family="Arial Black,sans-serif" font-size="13" font-weight="900" fill="#00A4E4">D</text><text x="23" y="26" font-family="Arial Black,sans-serif" font-size="13" font-weight="900" fill="#fff">+</text></svg>'),
+        "prime_video": ("Prime Video", "#00A8E1",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#232F3E"/><path d="M13 13l16 7-16 7z" fill="#00A8E1"/><path d="M8 29c8 4 16 4 24 0" fill="none" stroke="#00A8E1" stroke-width="2.5" stroke-linecap="round"/></svg>'),
+        "tiktok": ("TikTok", "#010101",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#010101"/><circle cx="15" cy="27" r="5" fill="#fff"/><rect x="18" y="12" width="3" height="18" fill="#fff"/><rect x="21" y="12" width="10" height="4" fill="#fff"/></svg>'),
+        "bbc_iplayer": ("BBC iPlayer", "#C0002A",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#C0002A"/><rect x="3" y="13" width="10" height="14" rx="2" fill="#fff"/><rect x="15" y="13" width="10" height="14" rx="2" fill="#fff"/><rect x="27" y="13" width="10" height="14" rx="2" fill="#fff"/><text x="8" y="24" font-family="Arial,sans-serif" font-size="9" font-weight="900" fill="#C0002A" text-anchor="middle">B</text><text x="20" y="24" font-family="Arial,sans-serif" font-size="9" font-weight="900" fill="#C0002A" text-anchor="middle">B</text><text x="32" y="24" font-family="Arial,sans-serif" font-size="9" font-weight="900" fill="#C0002A" text-anchor="middle">C</text></svg>'),
+        "abema": ("ABEMA", "#7C3AED",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#7C3AED"/><path d="M13 8l-4 8h4zm14 0l4 8h-4z" fill="#fff"/><rect x="6" y="16" width="28" height="18" rx="3" fill="#fff"/><circle cx="15" cy="26" r="3" fill="#7C3AED"/><circle cx="25" cy="26" r="3" fill="#7C3AED"/></svg>'),
+        "bilibili_intl": ("哔哩哔哩港澳台", "#FB7299",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#FB7299"/><path d="M13 9l4 5M27 9l-4 5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><rect x="5" y="14" width="30" height="20" rx="6" fill="#fff"/><circle cx="15" cy="25" r="3" fill="#FB7299"/><circle cx="25" cy="25" r="3" fill="#FB7299"/><path d="M15 30c2 2 8 2 10 0" fill="none" stroke="#FB7299" stroke-width="1.5" stroke-linecap="round"/></svg>'),
+        "google_play": ("Google Play 地区", "#4285F4",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#fff"/><path d="M9 9l13 11L9 31z" fill="#34A853"/><path d="M9 9l13 11 8-4.5z" fill="#FBBC04"/><path d="M9 31l13-11 8 4.5z" fill="#EA4335"/><path d="M30 15.5L22 20l8 4.5z" fill="#4285F4"/></svg>'),
+        "chatgpt": ("ChatGPT", "#10A37F",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#10A37F"/><path d="M20 10a10 10 0 00-7 17.3L11 30l2.7-2A10 10 0 1020 10z" fill="#fff"/></svg>'),
+        "claude": ("Claude", "#D97757",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#D97757"/><text x="20" y="27" font-family="Georgia,serif" font-size="22" font-weight="bold" fill="#fff" text-anchor="middle">A</text></svg>'),
+        "gemini": ("Gemini", "#4E82EE",
+            '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="#4E82EE"/><path d="M20 6c0 7.7-6.3 14-14 14 7.7 0 14 6.3 14 14 0-7.7 6.3-14 14-14-7.7 0-14-6.3-14-14z" fill="#fff"/></svg>'),
     }
 
     def flag(cc):
@@ -577,22 +590,23 @@ def ui():
         if len(cc) != 2: return ""
         return chr(ord(cc[0]) + 127397) + chr(ord(cc[1]) + 127397)
 
-    def render_row(key, info):
-        name, brand_color, icon_url = SERVICES[key]
+    def render_card(key, info):
+        name, brand_color, svg = SERVICES[key]
         st = info.get("status", "error")
-        txt_color, badge_bg, label = STATUS_META.get(st, ("#6b7280", "#f3f4f6", st))
-        region  = info.get("region", "")
-        detail  = info.get("detail", "")
-        flag_html = f'{flag(region)}&nbsp;' if region else ""
-        return f'''<div class="row">
-  <div class="row-icon" style="background:{brand_color}1a;border-color:{brand_color}33">
-    <img src="{icon_url}" alt="{name}" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=font-size:1.4rem;color:{brand_color}>●</span>'" />
+        txt_color, badge_bg, card_bg, label, badge_icon = STATUS_META.get(st, ("#374151", "#f3f4f6", "#f9fafb", st, "?"))
+        region = info.get("region", "")
+        detail = info.get("detail", "")
+        flag_str = flag(region)
+        region_html = f'<span class="flag-chip">{flag_str}&nbsp;{region}</span>' if region else ""
+        return f'''<div class="card" style="background:{card_bg}">
+  <div class="card-icon">{svg}</div>
+  <div class="card-body">
+    <div class="card-title">{name}&nbsp;{region_html}</div>
+    <div class="card-detail">{detail}</div>
   </div>
-  <div class="row-body">
-    <div class="row-name">{name}&nbsp;<span class="row-flag">{flag_html}{region}</span></div>
-    <div class="row-detail">{detail}</div>
+  <div class="badge" style="color:{txt_color};background:{badge_bg}">
+    <span class="badge-icon">{badge_icon}</span>{label}
   </div>
-  <div class="row-badge" style="color:{txt_color};background:{badge_bg}">{label}</div>
 </div>'''
 
     exit_info   = data.get("exit", {})
@@ -610,11 +624,11 @@ def ui():
     _empty = {"status": "error", "detail": "无数据"}
 
     def section(title, keys):
-        rows = "".join(render_row(k, data.get(k, _empty)) for k in keys)
-        return f'<div class="section"><div class="section-title">{title}</div><div class="list">{rows}</div></div>'
+        cards = "".join(render_card(k, data.get(k, _empty)) for k in keys)
+        return f'<div class="section"><div class="section-label">{title}</div><div class="card-list">{cards}</div></div>'
 
-    streaming_html = section("🎬 流媒体", streaming_keys)
-    ai_html        = section("🤖 AI 服务", ai_keys)
+    streaming_html = section("流媒体", streaming_keys)
+    ai_html        = section("AI 服务", ai_keys)
 
     html = f'''<!DOCTYPE html>
 <html lang="zh-CN">
@@ -624,30 +638,98 @@ def ui():
 <title>综合解锁检测</title>
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif;background:#f2f2f7;color:#1c1c1e;min-height:100vh}}
-.topbar{{background:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e5ea;position:sticky;top:0;z-index:10}}
-.topbar-title{{font-size:1.05rem;font-weight:600;color:#1c1c1e}}
-.topbar-btn{{background:#007aff;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:.85rem;cursor:pointer;text-decoration:none}}
-.exit-card{{margin:16px;background:#fff;border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.07)}}
-.exit-flag{{font-size:2.2rem;line-height:1}}
+body{{
+  font-family:"Segoe UI Variable","Segoe UI",-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+  background:linear-gradient(135deg,#e8eaf0 0%,#dde3ee 100%);
+  min-height:100vh;
+  color:#1a1a2e;
+}}
+.topbar{{
+  background:rgba(255,255,255,.75);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid rgba(0,0,0,.08);
+  padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}}
+.topbar-title{{font-size:1rem;font-weight:600;color:#1a1a2e;letter-spacing:-.01em}}
+.topbar-btn{{
+  background:#0078d4;color:#fff;border:none;border-radius:6px;
+  padding:6px 16px;font-size:.82rem;font-weight:500;
+  cursor:pointer;text-decoration:none;letter-spacing:.01em;
+  box-shadow:0 1px 4px rgba(0,120,212,.3);
+  transition:background .15s;
+}}
+.topbar-btn:hover{{background:#106ebe}}
+.wrap{{max-width:600px;margin:0 auto;padding:16px 14px 40px}}
+.exit-card{{
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(12px);
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 2px 12px rgba(0,0,0,.08);
+  padding:18px 20px;
+  display:flex;align-items:center;gap:16px;
+  margin-bottom:6px;
+}}
+.exit-flag{{font-size:2.6rem;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))}}
 .exit-body{{flex:1;min-width:0}}
-.exit-ip{{font-size:1.1rem;font-weight:700;color:#1c1c1e;letter-spacing:.02em}}
-.exit-place{{font-size:.82rem;color:#8e8e93;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-.exit-meta{{font-size:.75rem;color:#c7c7cc;margin-top:10px;text-align:center}}
-.section{{margin:0 16px 20px}}
-.section-title{{font-size:.75rem;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.06em;padding:12px 4px 6px}}
-.list{{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07)}}
-.row{{display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #f2f2f7}}
-.row:last-child{{border-bottom:none}}
-.row-icon{{width:44px;height:44px;border-radius:12px;border:1px solid transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}}
-.row-icon img{{width:32px;height:32px;object-fit:contain}}
-.row-body{{flex:1;min-width:0}}
-.row-name{{font-size:.93rem;font-weight:600;color:#1c1c1e;display:flex;align-items:center;gap:4px;flex-wrap:wrap}}
-.row-flag{{font-size:.8rem;color:#8e8e93;font-weight:400}}
-.row-detail{{font-size:.78rem;color:#8e8e93;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-.row-badge{{flex-shrink:0;font-size:.78rem;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}}
-.refresh-wrap{{text-align:center;padding:8px 16px 32px}}
-.refresh-btn{{display:inline-block;background:#007aff;color:#fff;text-decoration:none;border-radius:12px;padding:12px 32px;font-size:.9rem;font-weight:500}}
+.exit-ip{{font-size:1.15rem;font-weight:700;letter-spacing:-.01em}}
+.exit-sub{{font-size:.8rem;color:#666;margin-top:3px}}
+.exit-time{{text-align:center;font-size:.72rem;color:#999;margin-bottom:20px;padding-top:6px}}
+.section{{margin-bottom:8px}}
+.section-label{{
+  font-size:.72rem;font-weight:600;color:#666;
+  text-transform:uppercase;letter-spacing:.08em;
+  padding:14px 4px 6px;
+}}
+.card-list{{display:flex;flex-direction:column;gap:8px}}
+.card{{
+  background:rgba(255,255,255,.88);
+  backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.95);
+  border-radius:14px;
+  box-shadow:0 1px 6px rgba(0,0,0,.07);
+  padding:13px 16px;
+  display:flex;align-items:center;gap:14px;
+  transition:box-shadow .15s,transform .12s;
+}}
+.card:hover{{box-shadow:0 4px 16px rgba(0,0,0,.10);transform:translateY(-1px)}}
+.card-icon{{
+  width:44px;height:44px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}}
+.card-icon svg{{width:40px;height:40px;}}
+.card-body{{flex:1;min-width:0}}
+.card-title{{
+  font-size:.92rem;font-weight:600;
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+}}
+.flag-chip{{font-size:.78rem;color:#888;font-weight:400}}
+.card-detail{{font-size:.77rem;color:#888;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.badge{{
+  flex-shrink:0;display:flex;align-items:center;gap:5px;
+  font-size:.8rem;font-weight:600;
+  padding:5px 12px;border-radius:20px;white-space:nowrap;
+}}
+.badge-icon{{
+  width:16px;height:16px;border-radius:50%;
+  background:currentColor;color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:.65rem;font-weight:700;flex-shrink:0;
+}}
+.refresh-wrap{{text-align:center;padding-top:20px}}
+.refresh-btn{{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#0078d4;color:#fff;text-decoration:none;
+  border-radius:8px;padding:11px 28px;
+  font-size:.88rem;font-weight:500;
+  box-shadow:0 2px 8px rgba(0,120,212,.3);
+  transition:background .15s;
+}}
+.refresh-btn:hover{{background:#106ebe}}
 </style>
 </head>
 <body>
@@ -655,18 +737,20 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hir
   <span class="topbar-title">综合解锁检测</span>
   <a class="topbar-btn" href="/check/{SHOW_TOKEN}?redirect=1">刷新检测</a>
 </div>
-<div class="exit-card">
-  <div class="exit-flag">{flag(exit_rgn)}</div>
-  <div class="exit-body">
-    <div class="exit-ip">{exit_ip}</div>
-    <div class="exit-place">{exit_place}{"&nbsp;·&nbsp;" + exit_isp if exit_isp else ""}</div>
+<div class="wrap">
+  <div class="exit-card">
+    <div class="exit-flag">{flag(exit_rgn)}</div>
+    <div class="exit-body">
+      <div class="exit-ip">{exit_ip}</div>
+      <div class="exit-sub">{exit_place}{"&nbsp;·&nbsp;" + exit_isp if exit_isp else ""}</div>
+    </div>
   </div>
-</div>
-<div class="exit-meta">最后检测：{updated_str}</div>
-{streaming_html}
-{ai_html}
-<div class="refresh-wrap">
-  <a class="refresh-btn" href="/check/{SHOW_TOKEN}?redirect=1">🔄 手动触发重新检测</a>
+  <div class="exit-time">最后检测：{updated_str}</div>
+  {streaming_html}
+  {ai_html}
+  <div class="refresh-wrap">
+    <a class="refresh-btn" href="/check/{SHOW_TOKEN}?redirect=1">🔄&nbsp;手动重新检测</a>
+  </div>
 </div>
 </body>
 </html>'''
