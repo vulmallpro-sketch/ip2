@@ -91,7 +91,7 @@ fi
 cat > "${INSTALL_DIR}/app.py" <<'PYEOF'
 import os, json, time, threading, re, logging, concurrent.futures
 import requests
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 log = logging.getLogger(__name__)
@@ -544,9 +544,124 @@ def get_status():
         return jsonify(dict(_cache))
 
 
-@app.route(f'/check/{SHOW_TOKEN}')
-def trigger_check():
+@app.route(f'/ui/{SHOW_TOKEN}')
+def ui():
+    with _lock:
+        data = dict(_cache)
+
+    STATUS_META = {
+        "available":   ("✅", "#22c55e", "可用"),
+        "partial":     ("⚠️", "#f59e0b", "部分"),
+        "unavailable": ("🚫", "#ef4444", "不可用"),
+        "warning":     ("⚠️", "#f59e0b", "警告"),
+        "error":       ("❌", "#6b7280", "失败"),
+        "info":        ("ℹ️", "#3b82f6", "信息"),
+    }
+    SERVICE_NAMES = {
+        "youtube_premium": ("YouTube Premium", "🎬"),
+        "netflix":         ("Netflix",         "🎬"),
+        "disney_plus":     ("Disney+",         "🎬"),
+        "prime_video":     ("Prime Video",     "🎬"),
+        "tiktok":          ("TikTok",          "🎬"),
+        "bbc_iplayer":     ("BBC iPlayer",     "🎬"),
+        "abema":           ("ABEMA",           "🎬"),
+        "bilibili_intl":   ("哔哩哔哩港澳台",  "🎬"),
+        "google_play":     ("Google Play 地区","🤖"),
+        "chatgpt":         ("ChatGPT",         "🤖"),
+        "claude":          ("Claude",          "🤖"),
+        "gemini":          ("Gemini",          "🤖"),
+    }
+
+    def flag(cc):
+        cc = (cc or "").upper()
+        if len(cc) != 2: return ""
+        return chr(ord(cc[0]) + 127397) + chr(ord(cc[1]) + 127397)
+
+    def render_card(key, name, icon_cat, info):
+        st = info.get("status", "error")
+        icon, color, label = STATUS_META.get(st, ("❓", "#6b7280", st))
+        region = info.get("region", "")
+        detail = info.get("detail", "")
+        region_html = f'<span class="region">{flag(region)} {region}</span>' if region else ""
+        return f'''<div class="card" style="--accent:{color}">
+  <div class="card-header">
+    <span class="svc-name">{name}</span>
+    {region_html}
+  </div>
+  <div class="card-status" style="color:{color}">{icon} {label}</div>
+  <div class="card-detail">{detail}</div>
+</div>'''
+
+    exit_info  = data.get("exit", {})
+    exit_ip    = exit_info.get("ip", "—")
+    exit_rgn   = exit_info.get("region", "")
+    exit_det   = (exit_info.get("detail") or "").replace("\n", " · ")
+    updated_at = data.get("updated_at")
+    updated_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(updated_at)) if updated_at else "—"
+
+    streaming_keys = ["youtube_premium","netflix","disney_plus","prime_video","tiktok","bbc_iplayer","abema","bilibili_intl"]
+    ai_keys        = ["google_play","chatgpt","claude","gemini"]
+
+    def section(title, keys):
+        cards = "".join(render_card(k, SERVICE_NAMES[k][0], SERVICE_NAMES[k][1], data.get(k, {"status":"error","detail":"无数据"})) for k in keys)
+        return f'<h2 class="section-title">{title}</h2><div class="grid">{cards}</div>'
+
+    streaming_html = section("🎬 流媒体", streaming_keys)
+    ai_html        = section("🤖 AI 服务", ai_keys)
+
+    html = f'''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>节点解锁检测</title>
+<style>
+  *{{box-sizing:border-box;margin:0;padding:0}}
+  body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:24px 16px}}
+  .header{{text-align:center;margin-bottom:32px}}
+  .header h1{{font-size:1.6rem;font-weight:700;color:#f1f5f9;margin-bottom:8px}}
+  .exit-bar{{display:inline-flex;gap:12px;align-items:center;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:10px 20px;font-size:.9rem;color:#94a3b8;flex-wrap:wrap;justify-content:center}}
+  .exit-bar .ip{{color:#38bdf8;font-weight:600;font-size:1rem}}
+  .exit-bar .flag{{font-size:1.2rem}}
+  .meta{{margin-top:8px;font-size:.78rem;color:#475569}}
+  .section-title{{font-size:1rem;font-weight:600;color:#94a3b8;margin:24px 0 12px;letter-spacing:.05em;text-transform:uppercase}}
+  .grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}}
+  .card{{background:#1e293b;border:1px solid #334155;border-left:3px solid var(--accent);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;transition:transform .15s}}
+  .card:hover{{transform:translateY(-2px)}}
+  .card-header{{display:flex;justify-content:space-between;align-items:center}}
+  .svc-name{{font-size:.9rem;font-weight:600;color:#e2e8f0}}
+  .region{{font-size:.78rem;color:#64748b}}
+  .card-status{{font-size:.95rem;font-weight:600}}
+  .card-detail{{font-size:.75rem;color:#64748b;line-height:1.4;word-break:break-all}}
+  .refresh-btn{{display:block;margin:28px auto 0;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:.9rem;cursor:pointer;text-decoration:none;width:fit-content}}
+  .refresh-btn:hover{{background:#2563eb}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>节点解锁检测</h1>
+  <div class="exit-bar">
+    <span class="flag">{flag(exit_rgn)}</span>
+    <span class="ip">{exit_ip}</span>
+    <span>{exit_det}</span>
+  </div>
+  <div class="meta">最后检测：{updated_str}</div>
+</div>
+{streaming_html}
+{ai_html}
+<a class="refresh-btn" href="/check/{SHOW_TOKEN}?redirect=1">🔄 手动触发重新检测</a>
+</body>
+</html>'''
+    if not data:
+        return "<h2 style='font-family:sans-serif;padding:40px;color:#999'>尚未完成首次检测，请稍候...</h2>", 503
+    return html
+
+
+@app.route(f'/check/{SHOW_TOKEN}', methods=['GET'])
+def trigger_check_redirect():
     threading.Thread(target=run_all_checks, daemon=True).start()
+    if 'redirect' in request.args:
+        return '<meta http-equiv="refresh" content="35;url=." /><p style="font-family:sans-serif;padding:40px">已触发检测，约 30 秒后自动跳回结果页...</p>'
     return jsonify({"message": "已触发检测，约 30 秒后查询 /status/ 获取最新结果"})
 
 
@@ -582,7 +697,8 @@ SERVER_IP=$(curl -s --max-time 5 https://ipinfo.io/ip || echo "your-server-ip")
 SHOW_TOKEN=$(python3 -c "import json; print(json.load(open('${CONFIG_PATH}'))['show_token'])")
 
 info "安装成功"
-echo "查询解锁状态: http://${SERVER_IP}:${PORT}/status/${SHOW_TOKEN}"
+echo "可视化面板:   http://${SERVER_IP}:${PORT}/ui/${SHOW_TOKEN}"
+echo "JSON 接口:    http://${SERVER_IP}:${PORT}/status/${SHOW_TOKEN}"
 echo "手动触发检测: http://${SERVER_IP}:${PORT}/check/${SHOW_TOKEN}"
 echo "自动检测间隔: ${INTERVAL} 秒（默认每 30 分钟一次，可用 INTERVAL=xxx 环境变量修改）"
 echo
