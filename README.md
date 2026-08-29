@@ -1,201 +1,348 @@
-﻿# IP-API - 涓€閿洿鎹P鏈嶅姟
+﻿# ip2 - 落地节点工具集
 
-涓€涓交閲忕骇鐨?IP 鏇存崲鏈嶅姟锛岄儴缃插湪 VPS 涓婂彲瀹炵幇杩滅▼涓€閿崲IP銆傚熀浜?DHCP 閲嶆柊鐢宠鍜屾満鍣ㄩ噸鍚潵鏇存柊鍏綉 IP锛屾彁渚?Web API 鎺ュ彛銆?
-## 馃搵 鍔熻兘鐗规€?
-- 鉁?**鏌ョ湅 IP**锛氬疄鏃舵煡璇㈠綋鍓嶆湇鍔″櫒鐨勫叕缃?IP
-- 鉁?**鏇存崲 IP**锛氶€氳繃 DHCP 閲嶆柊鐢宠 + 鏈哄櫒閲嶅惎鏉ユ洿鎹?IP
-- 鉁?**涓€閿畨瑁?*锛氭敮鎸佸畬鍏ㄨ嚜鍔ㄥ寲閮ㄧ讲锛岃嚜鍔ㄥ鐞嗕緷璧栧拰閰嶇疆
-- 鉁?**Token 璁よ瘉**锛氱敓鎴愰殢鏈?Token 淇濇姢 API 鎺ュ彛
-- 鉁?**鏅鸿兘闄愭祦**锛氶槻姝㈤绻佽皟鐢紝60 绉掑唴鏈€澶氭崲涓€娆?IP
-- 鉁?**鑷姩鍚姩**锛氫互 systemd 鏈嶅姟杩愯锛屾満鍣ㄩ噸鍚悗鑷姩鍚姩
-- 鉁?**Web UI**锛氭洿鎹?IP 鏃舵彁渚涘疄鏃惰繘搴︽樉绀洪〉闈?
-## 馃殌 蹇€熷紑濮?
-### 涓€閿畨瑁?
-**瑕佹眰**锛?- 闇€瑕?root 鏉冮檺
-- Linux 绯荤粺锛圖ebian/Ubuntu锛?- 缃戠粶杩炴帴姝ｅ父
+包含两个工具，均可一键安装在落地节点服务器上，通过 Web API 远程调用。
 
-**瀹夎鍛戒护**锛?
+---
+
+## 🔁 ip-api — 一键换IP服务
+
+基于 DHCP 重新申请 + 机器重启来更换公网 IP，提供 Web API 接口。
+
+### 功能特性
+
+- 实时查询当前公网 IP
+- 远程触发换 IP（DHCP 重新申请 + 重启）
+- Token 认证保护接口
+- 智能限流（60 秒内最多换一次）
+- systemd 服务，开机自启
+
+### 安装
+
 ```bash
 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
 ```
 
-**浜や簰寮忓畨瑁呮祦绋?*锛?1. 鑴氭湰浼氭彁绀鸿緭鍏ユ湇鍔″悕绉帮紙榛樿 `ip-api`锛?2. 鑷姩妫€鏌ュ苟瀹夎渚濊禆锛圥ython3銆丳ip銆丆url锛?3. 鐢熸垚 Token 骞堕厤缃?systemd 鏈嶅姟
-4. 瀹夎瀹屾垚鍚庢樉绀?API 鍦板潃鍜?Token
-
-**瀹夎杈撳嚭绀轰緥**锛?```
-瀹夎 python3...
-瀹夎 pip3...
-瀹夎鎴愬姛
-鏌ヨIP: http://your.server.ip:8080/show/abc123def456
-鏇存崲IP: http://your.server.ip:8080/ipch/xyz789abc123
-```
-
-### 闈欓粯瀹夎锛堟寚瀹氬弬鏁帮級
-
-濡傛灉闇€瑕佽嚜鍔ㄥ寲鑴氭湰閮ㄧ讲锛屽彲鐢ㄧ幆澧冨彉閲忔寚瀹氬弬鏁帮細
+可选参数：
 
 ```bash
-# 鎸囧畾鏈嶅姟鍚?S=ip-api bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
+S=ip-api PORT=8080 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
+```
 
-# 鎸囧畾绔彛锛堥€氳繃 PORT 鐜鍙橀噺锛?PORT=9090 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
+### API
 
-# 鍚敤璋冭瘯杈撳嚭
+| 接口 | 说明 |
+|---|---|
+| `GET /show/{token}` | 查询当前公网 IP |
+| `GET /ipch/{token}` | 触发换 IP（返回进度页） |
+
+---
+
+## 🔍 unlock-detect — 流媒体解锁检测服务
+
+在落地机上定时检测该节点能解锁哪些流媒体和 AI 服务，结果通过 Web API 或可视化面板查询。
+
+### 检测项目
+
+| 分类 | 平台 |
+|---|---|
+| 流媒体 | YouTube Premium、Netflix、Disney+、Prime Video、TikTok、BBC iPlayer、ABEMA、哔哩哔哩港澳台 |
+| AI 服务 | Google Play 地区、ChatGPT、Claude、Gemini |
+
+### 安装
+
+```bash
+bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/unlock-detect-install.sh)
+```
+
+可选参数：
+
+```bash
+# 自定义服务名、端口（默认 3000）、检测间隔（默认 1800 秒）
+S=hk-node PORT=3000 INTERVAL=1800 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/unlock-detect-install.sh)
+```
+
+安装完成后输出：
+
+```
+可视化面板:   http://<IP>:3000/ui/<token>
+JSON 接口:    http://<IP>:3000/status/<token>
+手动触发检测: http://<IP>:3000/check/<token>
+```
+
+### API
+
+| 接口 | 说明 |
+|---|---|
+| `GET /ui/{token}` | HTML 可视化面板，显示所有检测结果 |
+| `GET /status/{token}` | JSON 格式检测结果 |
+| `GET /check/{token}` | 手动触发一次重新检测 |
+
+### JSON 结果格式示例
+
+```json
+{
+  "exit":            { "status": "available", "region": "JP", "ip": "1.2.3.4", "detail": "Japan · Tokyo\nAlibaba · 1.2.3.4" },
+  "netflix":         { "status": "partial",   "region": "JP", "detail": "仅自制内容" },
+  "disney_plus":     { "status": "unavailable","region": "JP", "detail": "当前地区不可用" },
+  "youtube_premium": { "status": "available", "region": "JP", "detail": "完整可用" },
+  "chatgpt":         { "status": "available", "region": "JP", "detail": "Web / API 入口可用" },
+  "updated_at": 1787988052
+}
+```
+
+`status` 取值：`available` / `partial` / `unavailable` / `warning` / `error` / `info`
+
+---
+
+## 卸载
+
+安装完成后会自动生成卸载脚本，路径会在安装结束时输出：
+
+```bash
+bash /opt/<服务名>.uninstall.sh
+```
+
+一个轻量级的 IP 更换服务，部署在 VPS 上可实现远程一键换IP。基于 DHCP 重新申请和机器重启来更新公网 IP，提供 Web API 接口。
+
+## 📋 功能特性
+
+- ✅ **查看 IP**：实时查询当前服务器的公网 IP
+- ✅ **更换 IP**：通过 DHCP 重新申请 + 机器重启来更换 IP
+- ✅ **一键安装**：支持完全自动化部署，自动处理依赖和配置
+- ✅ **Token 认证**：生成随机 Token 保护 API 接口
+- ✅ **智能限流**：防止频繁调用，60 秒内最多换一次 IP
+- ✅ **自动启动**：以 systemd 服务运行，机器重启后自动启动
+- ✅ **Web UI**：更换 IP 时提供实时进度显示页面
+
+## 🚀 快速开始
+
+### 一键安装
+
+**要求**：
+- 需要 root 权限
+- Linux 系统（Debian/Ubuntu）
+- 网络连接正常
+
+**安装命令**：
+
+```bash
+bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
+```
+
+**交互式安装流程**：
+1. 脚本会提示输入服务名称（默认 `ip-api`）
+2. 自动检查并安装依赖（Python3、Pip、Curl）
+3. 生成 Token 并配置 systemd 服务
+4. 安装完成后显示 API 地址和 Token
+
+**安装输出示例**：
+```
+安装 python3...
+安装 pip3...
+安装成功
+查询IP: http://your.server.ip:8080/show/abc123def456
+更换IP: http://your.server.ip:8080/ipch/xyz789abc123
+```
+
+### 静默安装（指定参数）
+
+如果需要自动化脚本部署，可用环境变量指定参数：
+
+```bash
+# 指定服务名
+S=ip-api bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
+
+# 指定端口（通过 PORT 环境变量）
+PORT=9090 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
+
+# 启用调试输出
 DEBUG_INSTALL=1 bash <(curl -fLSs https://raw.githubusercontent.com/vulmallpro-sketch/ip2/main/ip-api-install.sh)
 ```
 
-## 馃摗 API 浣跨敤
+## 📡 API 使用
 
-瀹夎瀹屾垚鍚庯紝鑴氭湰浼氳緭鍑轰袱涓?API 鍦板潃鍜屽搴旂殑 Token銆?
-### 鏌ヨ IP
+安装完成后，脚本会输出两个 API 地址和对应的 Token。
 
-**绔偣**锛歚GET /show/{SHOW_TOKEN}`
+### 查询 IP
 
-**鍔熻兘**锛氳幏鍙栧綋鍓嶆湇鍔″櫒鐨勫叕缃?IP
+**端点**：`GET /show/{SHOW_TOKEN}`
 
-**绀轰緥**锛?```bash
+**功能**：获取当前服务器的公网 IP
+
+**示例**：
+```bash
 curl http://your.server.ip:8080/show/abc123def456
 ```
 
-**鍝嶅簲**锛?```json
+**响应**：
+```json
 {
   "ip": "203.0.113.42"
 }
 ```
 
-### 鏇存崲 IP
+### 更换 IP
 
-**绔偣**锛歚GET /ipch/{IPCH_TOKEN}`
+**端点**：`GET /ipch/{IPCH_TOKEN}`
 
-**鍔熻兘**锛氳Е鍙?IP 鏇存崲娴佺▼锛圖HCP 閲嶆柊鐢宠 + 鏈哄櫒閲嶅惎锛?
-**绀轰緥**锛?```bash
+**功能**：触发 IP 更换流程（DHCP 重新申请 + 机器重启）
+
+**示例**：
+```bash
 curl http://your.server.ip:8080/ipch/xyz789abc123
 ```
 
-**娴佺▼**锛?1. 瑙﹀彂璇锋眰鍚庯紝鑴氭湰浼氬湪鍚庡彴鍚姩閲嶅惎娴佺▼
-2. 杩斿洖 HTML 椤甸潰锛屾樉绀哄疄鏃舵崲 IP 杩涘害
-3. 鑴氭湰鍦ㄥ悗鍙帮細
-   - 閲婃斁 DHCP 绉熺害锛坄dhclient -r`锛?   - 绛夊緟 30 绉?   - 閲嶆柊鐢宠 IP锛坄dhclient -v`锛?   - 閲嶅惎鏈哄櫒锛坄reboot`锛?4. 椤甸潰浼氭瘡 5 绉掓煡璇竴娆℃柊 IP锛屾洿鏂拌繘搴?5. 鏂?IP 鑾峰緱鎴栫瓑寰呰秴鏃讹紙200 绉掞級鍚庡仠姝㈣疆璇?
-**闄愭祦**锛?- 鍚屼竴鍙版湇鍔″櫒 60 绉掑唴鏃犳硶杩炵画瑙﹀彂鎹?IP
-- 瓒呴檺浼氳繑鍥?HTTP 429 鍜岄敊璇俊鎭細`{"error": "too frequent, wait XXs"}`
+**流程**：
+1. 触发请求后，脚本会在后台启动重启流程
+2. 返回 HTML 页面，显示实时换 IP 进度
+3. 脚本在后台：
+   - 释放 DHCP 租约（`dhclient -r`）
+   - 等待 30 秒
+   - 重新申请 IP（`dhclient -v`）
+   - 重启机器（`reboot`）
+4. 页面会每 5 秒查询一次新 IP，更新进度
+5. 新 IP 获得或等待超时（200 秒）后停止轮询
 
-## 馃摝 瀹夎鏂囦欢璇存槑
+**限流**：
+- 同一台服务器 60 秒内无法连续触发换 IP
+- 超限会返回 HTTP 429 和错误信息：`{"error": "too frequent, wait XXs"}`
 
-瀹夎鍚庣敓鎴愮殑鏂囦欢缁撴瀯锛堥粯璁よ矾寰?`/opt/ip-api`锛夛細
+## 📦 安装文件说明
+
+安装后生成的文件结构（默认路径 `/opt/ip-api`）：
 
 ```
 /opt/ip-api/
-鈹溾攢鈹€ app.py              # Flask 搴旂敤涓绘枃浠?鈹溾攢鈹€ config.json         # 閰嶇疆锛坱oken 鍜岀鍙ｏ級
-鈹溾攢鈹€ redial.sh           # DHCP 閲嶆柊鐢宠鍜岄噸鍚剼鏈?鈹斺攢鈹€ ip-api.uninstall.sh # 鍗歌浇鑴氭湰
+├── app.py              # Flask 应用主文件
+├── config.json         # 配置（token 和端口）
+├── redial.sh           # DHCP 重新申请和重启脚本
+└── ip-api.uninstall.sh # 卸载脚本
 ```
 
-**閰嶇疆鏂囦欢** `config.json`锛?```json
+**配置文件** `config.json`：
+```json
 {
-  "ipch_token": "鐢熸垚鐨勬洿鎹P Token",
-  "show_token": "鐢熸垚鐨勬煡璇P Token",
+  "ipch_token": "生成的更换IP Token",
+  "show_token": "生成的查询IP Token",
   "port": 8080
 }
 ```
 
-## 馃敡 绠＄悊鏈嶅姟
+## 🔧 管理服务
 
-鍋囪鏈嶅姟鍚嶄负 `ip-api`锛堥粯璁ゅ€硷級锛?
-### 鏌ョ湅鏈嶅姟鐘舵€?```bash
+假设服务名为 `ip-api`（默认值）：
+
+### 查看服务状态
+```bash
 systemctl status ip-api
 ```
 
-### 鏌ョ湅杩愯鏃ュ織
+### 查看运行日志
 ```bash
 journalctl -u ip-api -f
 ```
 
-### 閲嶅惎鏈嶅姟
+### 重启服务
 ```bash
 systemctl restart ip-api
 ```
 
-### 鍋滄鏈嶅姟
+### 停止服务
 ```bash
 systemctl stop ip-api
 ```
 
-### 鍗歌浇鏈嶅姟
+### 卸载服务
 
-瀹夎鑴氭湰浼氳嚜鍔ㄧ敓鎴愬嵏杞借剼鏈?`/opt/ip-api.uninstall.sh`锛?
+安装脚本会自动生成卸载脚本 `/opt/ip-api.uninstall.sh`：
+
 ```bash
 bash /opt/ip-api.uninstall.sh
 ```
 
-鎴栨墜鍔ㄥ嵏杞斤細
+或手动卸载：
 ```bash
 systemctl disable --now ip-api
 rm -f /etc/systemd/system/ip-api.service
 rm -rf /opt/ip-api
 ```
 
-### 閲嶈鏈嶅姟
+### 重装服务
 
-濡傛灉闇€瑕侀噸鏂板畨瑁呮浛鎹㈠凡鏈夌殑鏈嶅姟锛岃繍琛屽畨瑁呰剼鏈椂閫夋嫨 `r` 閫夐」锛?
+如果需要重新安装替换已有的服务，运行安装脚本时选择 `r` 选项：
+
 ```
-璇ユ湇鍔″凡瀛樺湪锛岃鍏堣繍琛屼互涓嬪懡浠ゅ嵏杞斤細
+该服务已存在，请先运行以下命令卸载：
 ...
-鎴栬€呰緭鍏?[r] 褰诲簳閲嶈锛堜笉淇濈暀token锛? r
+或者输入 [r] 彻底重装（不保留token）: r
 ```
 
-## 鈿欙笍 鐜鍙橀噺鍜岄厤缃?
-### 瀹夎鏃跺彲鐢ㄧ殑鐜鍙橀噺
+## ⚙️ 环境变量和配置
 
-| 鍙橀噺 | 璇存槑 | 绀轰緥 |
+### 安装时可用的环境变量
+
+| 变量 | 说明 | 示例 |
 |-----|------|------|
-| `S` | 鏈嶅姟鍚嶇О | `S=my-api` |
-| `PORT` | 鏈嶅姟绔彛 | `PORT=9090` |
-| `DEBUG_INSTALL` | 鍚敤璋冭瘯鏃ュ織 | `DEBUG_INSTALL=1` |
+| `S` | 服务名称 | `S=my-api` |
+| `PORT` | 服务端口 | `PORT=9090` |
+| `DEBUG_INSTALL` | 启用调试日志 | `DEBUG_INSTALL=1` |
 
-### 宸插畨瑁呭悗淇敼閰嶇疆
+### 已安装后修改配置
 
-缂栬緫 `/opt/ip-api/config.json` 鍚庨噸鍚湇鍔★細
+编辑 `/opt/ip-api/config.json` 后重启服务：
 
 ```bash
 systemctl restart ip-api
 ```
 
-## 馃洝锔?瀹夊叏寤鸿
+## 🛡️ 安全建议
 
-1. **Token 淇濇姢**锛歍oken 鏄殢鏈虹敓鎴愮殑锛屼絾寤鸿涓嶈鍦ㄥ叕缃戠洿鎺ユ毚闇茶繖浜涘湴鍧€
-   - 浣跨敤 Nginx/Caddy 鍙嶅悜浠ｇ悊娣诲姞璁よ瘉
-   - 浣跨敤闃茬伀澧欓檺鍒?IP 璁块棶鑼冨洿
+1. **Token 保护**：Token 是随机生成的，但建议不要在公网直接暴露这些地址
+   - 使用 Nginx/Caddy 反向代理添加认证
+   - 使用防火墙限制 IP 访问范围
 
-2. **Token 鏇存崲**锛氬鏋?Token 娉勯湶锛岀紪杈?`config.json` 鎵嬪姩淇敼骞堕噸鍚湇鍔?
-3. **绔彛閰嶇疆**锛氶粯璁ょ洃鍚?`0.0.0.0`锛堟墍鏈夌綉鍗★級锛屽闇€闄愬埗鍙慨鏀?`app.py`
+2. **Token 更换**：如果 Token 泄露，编辑 `config.json` 手动修改并重启服务
 
-## 馃摑 鏁呴殰鎺掓煡
+3. **端口配置**：默认监听 `0.0.0.0`（所有网卡），如需限制可修改 `app.py`
 
-### 瀹夎澶辫触锛歱ip3 鎵句笉鍒?
-**鐥囩姸**锛?```
+## 📝 故障排查
+
+### 安装失败：pip3 找不到
+
+**症状**：
+```
 /dev/fd/63: line 47: pip3: command not found
 ```
 
-**瑙ｅ喅**锛?鑴氭湰宸叉敼杩涳紝浼氳嚜鍔ㄥ皾璇?`python3 -m ensurepip` 瀹夎 pip銆傚鏋滀粛鐒跺け璐ワ細
+**解决**：
+脚本已改进，会自动尝试 `python3 -m ensurepip` 安装 pip。如果仍然失败：
 
 ```bash
 apt-get update
 apt-get install -y python3-pip
 ```
 
-鐒跺悗閲嶆柊杩愯瀹夎鑴氭湰銆?
-### 鏈嶅姟鏃犳硶鍚姩
+然后重新运行安装脚本。
 
-妫€鏌ユ棩蹇楋細
+### 服务无法启动
+
+检查日志：
 ```bash
 journalctl -u ip-api -n 50
 ```
 
-甯歌鍘熷洜锛?- Port 宸茶鍗犵敤锛氭敼鐢ㄥ叾浠栫鍙ｉ噸瑁?- 鏉冮檺闂锛氱‘淇濅互 root 杩愯
-- Python 渚濊禆缂哄け锛氶噸鏂拌繍琛屽畨瑁呰剼鏈?
-### 鎹?IP 鏃犳硶鐢熸晥
+常见原因：
+- Port 已被占用：改用其他端口重装
+- 权限问题：确保以 root 运行
+- Python 依赖缺失：重新运行安装脚本
 
-纭浜嬮」锛?1. 鏈哄櫒闇€瑕佹敮鎸?DHCP锛堝ぇ澶氭暟浜戞湇鍔″晢 VPS 鏀寔锛?2. 妫€鏌ユ帴鍙ｆ槸鍚︾湡鐨勮璋冪敤锛堟煡鐪嬫棩蹇楋級
-3. DCHP 绉熺害鍙兘鏈湡姝ｉ噴鏀撅紝绋嶇瓑閲嶈瘯
+### 换 IP 无法生效
 
-## 馃搫 璁稿彲
+确认事项：
+1. 机器需要支持 DHCP（大多数云服务商 VPS 支持）
+2. 检查接口是否真的被调用（查看日志）
+3. DCHP 租约可能未真正释放，稍等重试
+
+## 📄 许可
 
 MIT License
