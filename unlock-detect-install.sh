@@ -129,6 +129,11 @@ info "安装依赖 flask / requests..."
   || error "依赖安装失败，请检查网络连接"
 PYTHON="${VENV}/bin/python3"
 
+cat > "${INSTALL_DIR}/app.py" <<'PYEOF'
+import os, json, time, threading, re, logging, concurrent.futures
+import requests
+from flask import Flask, jsonify, request
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 log = logging.getLogger(__name__)
 
