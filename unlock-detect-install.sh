@@ -94,6 +94,7 @@ if [ -z "$PANEL_TOKEN" ]; then
 	read -p "请输入面板 server_token（v2board 配置中的 server_token）: " PANEL_TOKEN
 fi
 
+mkdir -p "$INSTALL_DIR"
 CONFIG_PATH="${INSTALL_DIR}/config.json"
 if [ ! -f "$CONFIG_PATH" ]; then
 	SHOW_TOKEN=$(python3 -c "import secrets; print(secrets.token_hex(8))")
@@ -115,7 +116,6 @@ fi
 fi # end UPGRADE_ONLY==0
 
 # 创建虚拟环境（彻底绕开 PEP 668 / externally-managed-environment）
-mkdir -p "$INSTALL_DIR"
 VENV="${INSTALL_DIR}/venv"
 if [ ! -d "$VENV" ]; then
   info "创建 Python 虚拟环境..."
