@@ -72,8 +72,14 @@ if ! command -v pip3 >/dev/null 2>&1; then
   python3 -m pip --version >/dev/null 2>&1 || error "pip3 安装失败，请手动安装 python3-pip 后重试"
 fi
 
-python3 -m pip install flask requests --break-system-packages -q 2>/dev/null \
-    || python3 -m pip install flask requests -q
+if ! python3 -c "import flask, requests" 2>/dev/null; then
+  info "安装 flask / requests..."
+  python3 -m pip install flask requests --break-system-packages -q 2>/dev/null \
+    || python3 -m pip install flask requests -q 2>/dev/null \
+    || apt_install python3-flask python3-requests
+  python3 -c "import flask, requests" 2>/dev/null \
+    || error "flask/requests 安装失败，请检查网络或手动执行: pip3 install flask requests --break-system-packages"
+fi
 
 if [ "$UPGRADE_ONLY" -eq 0 ]; then
 # PORT 支持环境变量或首参数，默认 3000
