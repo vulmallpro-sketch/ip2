@@ -120,8 +120,9 @@ VENV="${INSTALL_DIR}/venv"
 if [ ! -d "$VENV" ]; then
   info "创建 Python 虚拟环境..."
   python3 -m venv "$VENV" >/dev/null 2>&1 || {
-    apt_install python3-venv python3-full
-    python3 -m venv "$VENV"
+    apt_install python3-venv || true
+    apt_install python3-full >/dev/null 2>&1 || true
+    python3 -m venv "$VENV" || error "无法创建 Python 虚拟环境，请手动安装 python3-venv 后重试"
   }
 fi
 info "安装依赖 flask / requests..."
