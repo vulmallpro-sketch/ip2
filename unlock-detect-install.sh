@@ -120,8 +120,14 @@ fi # end UPGRADE_ONLY==0
 # 创建虚拟环境（每次重建，避免残留缓存问题）
 VENV="${INSTALL_DIR}/venv"
 rm -rf "$VENV"
-info "创建 Python 虚拟环境..."
 _venv_ok=0
+
+# 后台 spinner：每秒输出一个点，直到被 kill
+_spin() { while true; do printf '.'; sleep 1; done; }
+
+printf "\033[32m\033[01m创建 Python 虚拟环境\033[0m"
+_spin & _spin_pid=$!
+trap 'kill $_spin_pid 2>/dev/null; echo' EXIT
 
 # 确保 python3-venv 已安装，再尝试创建 venv
 python3 -m venv --help >/dev/null 2>&1 || apt_install python3-venv >/dev/null 2>&1 || true
@@ -144,6 +150,9 @@ if [ "$_venv_ok" -eq 0 ]; then
   command -v virtualenv >/dev/null 2>&1 && virtualenv "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 fi
 
+kill $_spin_pid 2>/dev/null; wait $_spin_pid 2>/dev/null; echo
+trap - EXIT
+
 [ "$_venv_ok" -eq 0 ] && error "无法创建 Python 虚拟环境，python3 已损坏，请手动修复：apt-get install --reinstall python3 python3-venv"
 
 # --without-pip 模式下没有 pip 时，用 get-pip.py 引导
@@ -151,10 +160,14 @@ if [ ! -f "${VENV}/bin/pip" ] && [ ! -f "${VENV}/bin/pip3" ]; then
   curl -fsSL https://bootstrap.pypa.io/get-pip.py | "${VENV}/bin/python3" >/dev/null 2>&1 \
     || error "pip 引导安装失败，请检查网络连接"
 fi
-info "安装依赖 flask / requests..."
-"${VENV}/bin/pip" install flask requests --timeout 60 \
-  || "${VENV}/bin/pip" install flask requests --timeout 60 --index-url https://mirrors.aliyun.com/pypi/simple/ \
-  || error "依赖安装失败，请检查网络连接或手动执行: ${VENV}/bin/pip install flask requests"
+printf "\033[32m\033[01m安装依赖 flask / requests\033[0m"
+_spin & _spin_pid=$!
+trap 'kill $_spin_pid 2>/dev/null; echo' EXIT
+"${VENV}/bin/pip" install flask requests --timeout 60 >/dev/null 2>&1 \
+  || "${VENV}/bin/pip" install flask requests --timeout 60 --index-url https://mirrors.aliyun.com/pypi/simple/ >/dev/null 2>&1 \
+  || { kill $_spin_pid 2>/dev/null; echo; error "依赖安装失败，请检查网络连接或手动执行: ${VENV}/bin/pip install flask requests"; }
+kill $_spin_pid 2>/dev/null; wait $_spin_pid 2>/dev/null; echo
+trap - EXIT
 PYTHON="${VENV}/bin/python3"
 
 cat > "${INSTALL_DIR}/app.py" <<'PYEOF'
