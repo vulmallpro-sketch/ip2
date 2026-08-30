@@ -1,4 +1,5 @@
 #!/bin/bash
+# unlock-detect-install.sh — v2
 set -e
 if [ -n "$DEBUG_INSTALL" ]; then
 	set -x
