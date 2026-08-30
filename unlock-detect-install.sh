@@ -26,7 +26,7 @@ fi
 #### 服务名（支持静默安装 S=xxx）
 
 if [ -z "$S" ]; then
-	read -p "请输入服务名 [默认 unlock-detect] : " service_name
+	read -p "请输入服务名 [默认 unlock-detect] : " service_name || true
 	service_name=${service_name:-unlock-detect}
 	if [[ ! "$service_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
 		error "服务名不符合规则，只接受英文和数字。"
@@ -47,7 +47,7 @@ if [ -f "/etc/systemd/system/${service_name}.service" ]; then
 	echo "  [u] 仅升级程序（保留现有 token/配置，推荐）"
 	echo "  [r] 彻底重装（清空所有配置，重新填写 token 等）"
 	echo "  其他键退出"
-	read -p "请选择 [u/r]: " reinstall
+	read -p "请选择 [u/r]: " reinstall || true
 	if [ "${reinstall,,}" == "u" ]; then
 		info "升级模式：将只更新 app.py，保留现有配置..."
 		# 只更新 app.py，跳过 config.json / 依赖安装部分
@@ -73,26 +73,26 @@ PORT="${PORT:-${1:-3000}}"
 INTERVAL="${INTERVAL:-1800}"
 
 if [ -z "$NODE_ID" ]; then
-	read -p "请输入节点 ID（单个或多个，多个用逗号分隔，如 1 或 1,2,3，必填）: " NODE_ID
+	read -p "请输入节点 ID（单个或多个，多个用逗号分隔，如 1 或 1,2,3，必填）: " NODE_ID || true
 	if [[ ! "$NODE_ID" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
 		error "节点 ID 格式错误，只接受正整数或逗号分隔的多个正整数（如 1 或 1,2,3）"
 	fi
 fi
 
 if [ -z "$NODE_TYPE" ]; then
-	read -p "请输入节点协议类型（如 vmess/vless/trojan/shadowsocks/tuic/hysteria/anytls/v2node，必填）: " NODE_TYPE
+	read -p "请输入节点协议类型（如 vmess/vless/trojan/shadowsocks/tuic/hysteria/anytls/v2node，必填）: " NODE_TYPE || true
 	if [ -z "$NODE_TYPE" ]; then
 		error "节点协议类型不能为空"
 	fi
 fi
 
 if [ -z "$PANEL_URL" ]; then
-	read -p "请输入面板地址（如 https://panel.example.com）: " PANEL_URL
+	read -p "请输入面板地址（如 https://panel.example.com，可直接回车跳过）: " PANEL_URL || true
 fi
 PANEL_URL="${PANEL_URL%/}"
 
 if [ -z "$PANEL_TOKEN" ]; then
-	read -p "请输入面板 server_token（v2board 配置中的 server_token）: " PANEL_TOKEN
+	read -p "请输入面板 server_token（v2board 配置中的 server_token，可直接回车跳过）: " PANEL_TOKEN || true
 fi
 
 CONFIG_PATH="${INSTALL_DIR}/config.json"
