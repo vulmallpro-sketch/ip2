@@ -115,17 +115,15 @@ else
 fi
 fi # end UPGRADE_ONLY==0
 
-# 创建虚拟环境（彻底绕开 PEP 668 / externally-managed-environment）
+# 创建虚拟环境（每次重建，避免残留缓存问题）
 VENV="${INSTALL_DIR}/venv"
-# 检查 venv 是否完整可用，不完整则重建
-if [ ! -f "${VENV}/bin/python3" ]; then
-  [ -d "$VENV" ] && rm -rf "$VENV"
-  info "创建 Python 虚拟环境..."
-  python3 -m venv "$VENV" >/dev/null 2>&1 || {
-    apt_install python3-venv || true
-    apt_install python3-full >/dev/null 2>&1 || true
-    python3 -m venv "$VENV" || error "无法创建 Python 虚拟环境，请手动安装 python3-venv 后重试"
-  }
+rm -rf "$VENV"
+info "创建 Python 虚拟环境..."
+python3 -m venv "$VENV" >/dev/null 2>&1 || {
+  apt_install python3-venv || true
+  apt_install python3-full >/dev/null 2>&1 || true
+  python3 -m venv "$VENV" || error "无法创建 Python 虚拟环境，请手动安装 python3-venv 后重试"
+}
 fi
 info "安装依赖 flask / requests..."
 "${VENV}/bin/pip" install flask requests --timeout 60 \
