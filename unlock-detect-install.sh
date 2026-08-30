@@ -123,10 +123,12 @@ rm -rf "$VENV"
 _venv_ok=0
 
 info "[1/4] 尝试创建 Python 虚拟环境..."
+# 先确保 python3-venv 存在（静默，正常机器不会触发后续降级）
+python3 -m venv --help >/dev/null 2>&1 || apt_install python3-venv >/dev/null 2>&1 || true
 python3 -m venv "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 
 if [ "$_venv_ok" -eq 0 ]; then
-  info "[2/4] 修复 python3 安装后重试..."
+  info "[2/4] python3 可能已损坏，尝试修复后重试..."
   DEBIAN_FRONTEND=noninteractive apt-get install --reinstall -y python3 >/dev/null 2>&1 || true
   apt_install python3-venv >/dev/null 2>&1 || true
   apt_install python3-full >/dev/null 2>&1 || true
