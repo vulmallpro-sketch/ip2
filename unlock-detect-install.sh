@@ -128,8 +128,9 @@ if [ ! -f "${VENV}/bin/python3" ]; then
   }
 fi
 info "安装依赖 flask / requests..."
-"${VENV}/bin/pip" install flask requests -q >/dev/null 2>&1 \
-  || error "依赖安装失败，请检查网络连接"
+"${VENV}/bin/pip" install flask requests --timeout 60 \
+  || "${VENV}/bin/pip" install flask requests --timeout 60 --index-url https://mirrors.aliyun.com/pypi/simple/ \
+  || error "依赖安装失败，请检查网络连接或手动执行: ${VENV}/bin/pip install flask requests"
 PYTHON="${VENV}/bin/python3"
 
 cat > "${INSTALL_DIR}/app.py" <<'PYEOF'
