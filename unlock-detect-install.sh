@@ -97,7 +97,9 @@ fi
 
 CONFIG_PATH="${INSTALL_DIR}/config.json"
 if [ ! -f "$CONFIG_PATH" ]; then
-	SHOW_TOKEN=$(python3 -c "import secrets; print(secrets.token_hex(8))")
+	SHOW_TOKEN=$(cat /dev/urandom | tr -dc 'a-f0-9' | head -c 16 2>/dev/null \
+	  || python3 -c 'import secrets; print(secrets.token_hex(8))' 2>/dev/null \
+	  || date +%s%N | md5sum | head -c 16)
 	cat > "$CONFIG_PATH" <<EOF
 {
   "show_token": "${SHOW_TOKEN}",
