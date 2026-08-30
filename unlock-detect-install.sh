@@ -121,11 +121,39 @@ fi # end UPGRADE_ONLY==0
 VENV="${INSTALL_DIR}/venv"
 rm -rf "$VENV"
 info "创建 Python 虚拟环境..."
-python3 -m venv "$VENV" >/dev/null 2>&1 || {
-  apt_install python3-venv || true
+_venv_ok=0
+
+# 尝试 1：标准 venv
+python3 -m venv "$VENV" >/dev/null 2>&1 && _venv_ok=1
+
+# 尝试 2：安装 python3-venv 后重试
+if [ "$_venv_ok" -eq 0 ]; then
+  apt_install python3-venv >/dev/null 2>&1 || true
   apt_install python3-full >/dev/null 2>&1 || true
-  python3 -m venv "$VENV" || error "无法创建 Python 虚拟环境，请手动安装 python3-venv 后重试"
-}
+  python3 -m venv "$VENV" >/dev/null 2>&1 && _venv_ok=1
+fi
+
+# 尝试 3：--without-pip（规避 ensurepip 引发的 Segmentation fault）
+if [ "$_venv_ok" -eq 0 ]; then
+  info "标准 venv 失败，尝试 --without-pip 模式..."
+  python3 -m venv --without-pip "$VENV" >/dev/null 2>&1 && _venv_ok=1
+fi
+
+# 尝试 4：virtualenv
+if [ "$_venv_ok" -eq 0 ]; then
+  info "尝试通过 virtualenv 创建环境..."
+  apt_install python3-virtualenv >/dev/null 2>&1 || true
+  command -v virtualenv >/dev/null 2>&1 && virtualenv "$VENV" >/dev/null 2>&1 && _venv_ok=1
+fi
+
+[ "$_venv_ok" -eq 0 ] && error "无法创建 Python 虚拟环境（python3 可能已损坏），请尝试：apt-get install --reinstall python3 python3-venv"
+
+# 若 --without-pip 模式下没有 pip，用 get-pip.py 引导
+if [ ! -f "${VENV}/bin/pip" ] && [ ! -f "${VENV}/bin/pip3" ]; then
+  info "引导安装 pip..."
+  curl -fsSL https://bootstrap.pypa.io/get-pip.py | "${VENV}/bin/python3" >/dev/null 2>&1 \
+    || error "pip 引导安装失败，请检查网络连接"
+fi
 info "安装依赖 flask / requests..."
 "${VENV}/bin/pip" install flask requests --timeout 60 \
   || "${VENV}/bin/pip" install flask requests --timeout 60 --index-url https://mirrors.aliyun.com/pypi/simple/ \
