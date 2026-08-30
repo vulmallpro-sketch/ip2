@@ -120,39 +120,35 @@ fi # end UPGRADE_ONLY==0
 # 创建虚拟环境（每次重建，避免残留缓存问题）
 VENV="${INSTALL_DIR}/venv"
 rm -rf "$VENV"
+info "创建 Python 虚拟环境..."
 _venv_ok=0
 
-info "[1/4] 尝试创建 Python 虚拟环境..."
-# 先确保 python3-venv 存在（静默，正常机器不会触发后续降级）
+# 确保 python3-venv 已安装，再尝试创建 venv
 python3 -m venv --help >/dev/null 2>&1 || apt_install python3-venv >/dev/null 2>&1 || true
 python3 -m venv "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 
+# python3 本体损坏（如 ensurepip segfault）时的降级链，静默执行
 if [ "$_venv_ok" -eq 0 ]; then
-  info "[2/4] python3 可能已损坏，尝试修复后重试..."
   DEBIAN_FRONTEND=noninteractive apt-get install --reinstall -y python3 >/dev/null 2>&1 || true
-  apt_install python3-venv >/dev/null 2>&1 || true
   apt_install python3-full >/dev/null 2>&1 || true
   python3 -m venv "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 fi
 
 if [ "$_venv_ok" -eq 0 ]; then
-  info "[3/4] 尝试 --without-pip 模式（跳过 ensurepip，规避 segfault）..."
   rm -rf "$VENV"
   python3 -m venv --without-pip "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 fi
 
 if [ "$_venv_ok" -eq 0 ]; then
-  info "[4/4] 尝试 virtualenv..."
   apt_install python3-virtualenv >/dev/null 2>&1 || true
   command -v virtualenv >/dev/null 2>&1 && virtualenv "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 fi
 
-[ "$_venv_ok" -eq 0 ] && error "无法创建 Python 虚拟环境，python3 已损坏，请手动修复后重试：\n  apt-get install --reinstall python3 python3-venv"
+[ "$_venv_ok" -eq 0 ] && error "无法创建 Python 虚拟环境，python3 已损坏，请手动修复：apt-get install --reinstall python3 python3-venv"
 
-# 若 --without-pip 模式下没有 pip，用 get-pip.py 引导安装
+# --without-pip 模式下没有 pip 时，用 get-pip.py 引导
 if [ ! -f "${VENV}/bin/pip" ] && [ ! -f "${VENV}/bin/pip3" ]; then
-  info "引导安装 pip (get-pip.py)..."
-  curl -fsSL https://bootstrap.pypa.io/get-pip.py | "${VENV}/bin/python3" \
+  curl -fsSL https://bootstrap.pypa.io/get-pip.py | "${VENV}/bin/python3" >/dev/null 2>&1 \
     || error "pip 引导安装失败，请检查网络连接"
 fi
 info "安装依赖 flask / requests..."
