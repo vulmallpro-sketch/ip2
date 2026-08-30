@@ -123,26 +123,26 @@ rm -rf "$VENV"
 _venv_ok=0
 
 info "[1/4] 尝试创建 Python 虚拟环境..."
-python3 -m venv "$VENV" >/dev/null 2>&1 && _venv_ok=1
+python3 -m venv "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 
 if [ "$_venv_ok" -eq 0 ]; then
   info "[2/4] 修复 python3 安装后重试..."
   DEBIAN_FRONTEND=noninteractive apt-get install --reinstall -y python3 >/dev/null 2>&1 || true
   apt_install python3-venv >/dev/null 2>&1 || true
   apt_install python3-full >/dev/null 2>&1 || true
-  python3 -m venv "$VENV" >/dev/null 2>&1 && _venv_ok=1
+  python3 -m venv "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 fi
 
 if [ "$_venv_ok" -eq 0 ]; then
   info "[3/4] 尝试 --without-pip 模式（跳过 ensurepip，规避 segfault）..."
   rm -rf "$VENV"
-  python3 -m venv --without-pip "$VENV" >/dev/null 2>&1 && _venv_ok=1
+  python3 -m venv --without-pip "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 fi
 
 if [ "$_venv_ok" -eq 0 ]; then
   info "[4/4] 尝试 virtualenv..."
   apt_install python3-virtualenv >/dev/null 2>&1 || true
-  command -v virtualenv >/dev/null 2>&1 && virtualenv "$VENV" >/dev/null 2>&1 && _venv_ok=1
+  command -v virtualenv >/dev/null 2>&1 && virtualenv "$VENV" >/dev/null 2>&1 && _venv_ok=1 || true
 fi
 
 [ "$_venv_ok" -eq 0 ] && error "无法创建 Python 虚拟环境，python3 已损坏，请手动修复后重试：\n  apt-get install --reinstall python3 python3-venv"
