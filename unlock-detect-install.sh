@@ -117,7 +117,9 @@ fi # end UPGRADE_ONLY==0
 
 # 创建虚拟环境（彻底绕开 PEP 668 / externally-managed-environment）
 VENV="${INSTALL_DIR}/venv"
-if [ ! -d "$VENV" ]; then
+# 检查 venv 是否完整可用，不完整则重建
+if [ ! -f "${VENV}/bin/python3" ]; then
+  [ -d "$VENV" ] && rm -rf "$VENV"
   info "创建 Python 虚拟环境..."
   python3 -m venv "$VENV" >/dev/null 2>&1 || {
     apt_install python3-venv || true
